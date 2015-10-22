@@ -1,0 +1,1 @@
+MATCH (a:Person) WHERE has(a.gender) RETURN count(a)

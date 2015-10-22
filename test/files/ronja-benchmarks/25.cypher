@@ -1,0 +1,1 @@
+MATCH ()-[r:MEMBER_OF|ALLOWED_INHERIT]->() RETURN count(r)

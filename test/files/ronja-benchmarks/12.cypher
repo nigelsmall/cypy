@@ -1,0 +1,1 @@
+MATCH p=allShortestPaths((source:Person)-[:FRIEND_OF*]-(target:Person)) WHERE id(source) < id(target) and length(p) > 1 UNWIND nodes(p)[1..-1] as n RETURN n.first_name, n.last_name, count(*) as betweenness ORDER BY betweenness DESC
