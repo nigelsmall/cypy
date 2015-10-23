@@ -10,7 +10,7 @@ grammar = Grammar("""\
 Query        = RegularQuery
 RegularQuery = SingleQuery
 SingleQuery  = (Clause _?)+
-_            = ~"[ \\r\\n]+"
+_            = ~"\\s+"
 Clause       = Match
              / Create
              / Return
@@ -23,26 +23,34 @@ Expression   = Disjunction
              / Complement
              / Proposition
 
-Disjunction  = XDisjunction (_? ~"OR"i _? XDisjunction)+
-XDisjunction = Conjunction (_? ~"XOR"i _? Conjunction)+
-Conjunction  = Proposition (_? ~"AND"i _? Proposition)+
-Complement   = ~"NOT"i _? Proposition
+Disjunction  = XDisjunction ~"\\s+OR\\s+"i Expression
+XDisjunction = Conjunction ~"\\s+XOR\\s+"i Expression
+Conjunction  = Proposition ~"\\s+AND\\s+"i Expression
+Complement   = ~"NOT\\s+"i Expression
 Proposition  = Comparison
              / Arithmetic
              / Value
 
 Comparison   = Equality
              / Inequality
-             / LessThan
-             / MoreThan
              / LessThanOrEqual
              / MoreThanOrEqual
-Equality          = Arithmetic _? "=" _? Arithmetic
-Inequality        = Arithmetic _? "<>" _? Arithmetic
-LessThan          = Arithmetic _? "<" _? Arithmetic
-MoreThan          = Arithmetic _? ">" _? Arithmetic
-LessThanOrEqual   = Arithmetic _? "<=" _? Arithmetic
-MoreThanOrEqual   = Arithmetic _? ">=" _? Arithmetic
+             / LessThan
+             / MoreThan
+             / In
+             / Contains
+             / StartsWith
+             / EndsWith
+Equality          = Arithmetic ~"\\s*=\\s*" Arithmetic
+Inequality        = Arithmetic ~"\\s*<>\\s*" Arithmetic
+LessThanOrEqual   = Arithmetic ~"\\s*<=\\s*" Arithmetic
+MoreThanOrEqual   = Arithmetic ~"\\s*>=\\s*" Arithmetic
+LessThan          = Arithmetic ~"\\s*<\\s*" Arithmetic
+MoreThan          = Arithmetic ~"\\s*>\\s*" Arithmetic
+In                = Arithmetic ~"\\s+IN\\s+"i Arithmetic
+Contains          = Arithmetic ~"\\s+CONTAINS\\s+"i Arithmetic
+StartsWith        = Arithmetic ~"\\s+STARTS\\s+WITH\\s+"i Arithmetic
+EndsWith          = Arithmetic ~"\\s+ENDS\\s+WITH\\s+"i Arithmetic
 
 Arithmetic        = SumOrDifference
                   / ProductOrQuotient
@@ -50,13 +58,13 @@ Arithmetic        = SumOrDifference
                   / Value
 SumOrDifference   = Sum
                   / Difference
-Sum               = ProductOrQuotient (_? "+" _? Arithmetic)+
-Difference        = ProductOrQuotient _? "-" _? Arithmetic
+Sum               = ProductOrQuotient ~"\\s*\\+\\s*" Arithmetic
+Difference        = ProductOrQuotient ~"\\s*\\-\\s*" Arithmetic
 ProductOrQuotient = Product
                   / Quotient
                   / Remainder
                   / Value
-Product           = Exponent (_? "*" _? Arithmetic)+
+Product           = Exponent _? "*" _? Arithmetic
 Quotient          = Exponent _? "/" _? Arithmetic
 Remainder         = Exponent _? "%" _? Arithmetic
 Exponent          = Value _? "^" _? Arithmetic
@@ -70,6 +78,7 @@ Value             = Parenthetical
                   / StringLiteral
                   / Parameter
                   / IsNull
+                  / Count
 Parenthetical     = "(" _? Expression _? ")"
 Positive          = "+" _? Expression
 Negative          = "-" _? Expression
@@ -80,7 +89,8 @@ Integer           = ~"[0-9]+"
 Fraction          = ~"\.[0-9]+"
 StringLiteral     = '""'
 Parameter         = "{" Identifier "}"
-IsNull            = Expression ~"IS NULL"i
+IsNull            = Expression ~"IS"i ~"NULL"i
+Count             = ~"COUNT\\(\\s*"i Expression ~"\\s*\\)"
 
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart

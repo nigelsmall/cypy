@@ -1,0 +1,1 @@
+MATCH (n) WHERE n.value = 40 + {offset} + 12 RETURN n
