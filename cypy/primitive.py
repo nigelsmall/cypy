@@ -18,7 +18,7 @@
 
 from itertools import chain
 
-from py2neo.compat import integer, string, unicode, ustr
+from .compat import integer, string, unicode, ustr
 
 
 __all__ = ["Graph", "TraversableGraph", "Node", "Relationship", "Path"]
@@ -118,29 +118,43 @@ class PropertyContainer(object):
     """
 
     def __init__(self, **properties):
-        self.properties = PropertySet(properties)
+        self.__properties = PropertySet(properties)
 
     def __len__(self):
-        return len(self.properties)
+        return len(self.__properties)
 
     def __contains__(self, key):
-        return key in self.properties
+        return key in self.__properties
 
     def __getitem__(self, key):
-        return self.properties.__getitem__(key)
+        return self.__properties.__getitem__(key)
 
     def __setitem__(self, key, value):
-        self.properties.__setitem__(key, value)
+        self.__properties.__setitem__(key, value)
 
     def __delitem__(self, key):
-        self.properties.__delitem__(key)
+        self.__properties.__delitem__(key)
 
     def __iter__(self):
-        return iter(self.properties)
+        return iter(self.__properties)
 
-    @property
-    def property_keys(self):
-        return frozenset(self.properties.keys())
+    def clear(self):
+        self.__properties.clear()
+
+    def get(self, key, default=None):
+        self.__properties.get(key, default)
+
+    def keys(self):
+        return self.__properties.keys()
+
+    def setdefault(self, key, default=None):
+        return self.__properties.setdefault(key, default)
+
+    def update(self, iterable=None, **kwargs):
+        self.__properties.update(iterable, **kwargs)
+
+    def values(self):
+        return self.__properties.values()
 
 
 class Graph(object):
@@ -148,12 +162,12 @@ class Graph(object):
     """
 
     def __init__(self, nodes, relationships):
-        self.nodes = frozenset(nodes)
-        self.relationships = frozenset(relationships)
+        self.__nodes = frozenset(nodes)
+        self.__relationships = frozenset(relationships)
 
     def __eq__(self, other):
         try:
-            return self.nodes == other.nodes and self.relationships == other.relationships
+            return self.nodes() == other.nodes() and self.relationships() == other.relationships()
         except AttributeError:
             return False
 
@@ -162,64 +176,67 @@ class Graph(object):
 
     def __hash__(self):
         value = 0
-        for entity in self.nodes:
+        for entity in self.__nodes:
             value ^= hash(entity)
-        for entity in self.relationships:
+        for entity in self.__relationships:
             value ^= hash(entity)
         return value
 
     def __len__(self):
-        return self.size
+        return self.size()
 
     def __iter__(self):
-        return iter(self.relationships)
+        return iter(self.__relationships)
 
     def __bool__(self):
-        return bool(self.relationships)
+        return bool(self.__relationships)
 
     def __nonzero__(self):
-        return bool(self.relationships)
+        return bool(self.__relationships)
 
     def __or__(self, other):
-        return Graph(self.nodes | other.nodes, self.relationships | other.relationships)
+        return Graph(self.nodes() | other.nodes(), self.relationships() | other.relationships())
 
     def __and__(self, other):
-        return Graph(self.nodes & other.nodes, self.relationships & other.relationships)
+        return Graph(self.nodes() & other.nodes(), self.relationships() & other.relationships())
 
     def __sub__(self, other):
-        relationships = self.relationships - other.relationships
-        nodes = (self.nodes - other.nodes) | set().union(*(rel.nodes for rel in relationships))
+        relationships = self.relationships() - other.relationships()
+        nodes = ((self.nodes() - other.nodes()) |
+                 set().union(*(rel.nodes() for rel in relationships)))
         return Graph(nodes, relationships)
 
     def __xor__(self, other):
-        relationships = self.relationships ^ other.relationships
-        nodes = (self.nodes ^ other.nodes) | set().union(*(rel.nodes for rel in relationships))
+        relationships = self.relationships() ^ other.relationships()
+        nodes = ((self.nodes() ^ other.nodes()) |
+                 set().union(*(rel.nodes() for rel in relationships)))
         return Graph(nodes, relationships)
 
-    @property
+    def nodes(self):
+        return self.__nodes
+
+    def relationships(self):
+        return self.__relationships
+
     def order(self):
         """ Total number of unique nodes in this set.
         """
-        return len(self.nodes)
+        return len(self.__nodes)
 
-    @property
     def size(self):
         """ Total number of unique relationships in this set.
         """
-        return len(self.relationships)
+        return len(self.__relationships)
 
-    @property
     def labels(self):
-        return frozenset(chain(*(node.labels for node in self.nodes)))
+        return frozenset(chain(*(node.labels() for node in self.__nodes)))
 
-    @property
     def types(self):
-        return frozenset(rel.type for rel in self.relationships)
+        return frozenset(rel.type() for rel in self.__relationships)
 
-    @property
-    def property_keys(self):
-        return (frozenset(chain(*(node.properties.keys() for node in self.nodes))) |
-                frozenset(chain(*(rel.properties.keys() for rel in self.relationships))))
+    def keys(self):
+        return (frozenset(chain(*(node.keys() for node in self.nodes()))) |
+                frozenset(chain(*(rel.keys() for rel in self.relationships()))))
 
 
 class TraversableGraph(Graph):
@@ -272,31 +289,28 @@ class TraversableGraph(Graph):
 
     def __add__(self, other):
         assert isinstance(other, TraversableGraph)
-        if self.end_node == other.start_node:
+        if self.end_node() is other.start_node():
             seq_1 = self.__sequence[:-1]
             seq_2 = other.traverse()
-        elif self.length <= 1 and self.start_node is other.start_node:
+        elif self.length() <= 1 and self.start_node() is other.start_node():
             seq_1 = reversed(self.__sequence[1:])
             seq_2 = other.traverse()
-        elif other.length <= 1 and self.end_node is other.end_node:
+        elif other.length() <= 1 and self.end_node() is other.end_node():
             seq_1 = self.__sequence[:-1]
             seq_2 = reversed(list(other.traverse()))
-        elif self.length <= 1 and other.length <= 1 and self.start_node is other.end_node:
+        elif self.length() <= 1 and other.length() <= 1 and self.start_node() is other.end_node():
             seq_1 = reversed(self.__sequence[1:])
             seq_2 = reversed(list(other.traverse()))
         else:
             raise ValueError("Cannot concatenate walkable objects with no common endpoints")
         return TraversableGraph(*chain(seq_1, seq_2))
 
-    @property
     def start_node(self):
         return self.__sequence[0]
 
-    @property
     def end_node(self):
         return self.__sequence[-1]
 
-    @property
     def length(self):
         return (len(self.__sequence) - 1) // 2
 
@@ -320,12 +334,12 @@ class Node(Entity):
         self.__labels = set(labels)
 
     def __repr__(self):
-        return "(%s)" % "".join(":" + label for label in self.labels)
+        return "(%s)" % "".join(":" + label for label in self.__labels)
 
     def __eq__(self, other):
         try:
-            return (other.order == 1 and other.size == 0 and
-                    self.labels == other.labels and self.properties == other.properties)
+            return (other.order() == 1 and other.size() == 0 and
+                    self.labels() == other.labels() and dict(self) == dict(other))
         except AttributeError:
             return False
 
@@ -335,9 +349,26 @@ class Node(Entity):
     def __hash__(self):
         return hash(id(self))
 
-    @property
     def labels(self):
         return self.__labels
+
+    def add_label(self, label):
+        self.__labels.add(label)
+
+    def clear_labels(self):
+        self.__labels.clear()
+
+    def discard_label(self, label):
+        self.__labels.discard(label)
+
+    def has_label(self, label):
+        return label in self.__labels
+
+    def remove_label(self, label):
+        self.__labels.remove(label)
+
+    def update_labels(self, labels):
+        self.__labels.update(labels)
 
 
 class Relationship(Entity):
@@ -348,36 +379,35 @@ class Relationship(Entity):
         num_args = len(args)
         if num_args == 0:
             nodes = (None, None)
-            self.type = None
+            self.__type = None
         elif num_args == 1:
             nodes = (None, None)
-            self.type = args[0]
+            self.__type = args[0]
         elif num_args == 2:
             nodes = args
-            self.type = None
+            self.__type = None
         elif num_args == 3:
             nodes = (args[0], args[2])
-            self.type = args[1]
+            self.__type = args[1]
         else:
             raise TypeError("Hyperedges not supported")
         Entity.__init__(self, nodes[0], self, nodes[1], **properties)
 
     def __repr__(self):
-        if self.type is not None:
-            value = "-[:%s]->" % self.type
+        if self.__type is not None:
+            value = "-[:%s]->" % self.__type
         else:
             value = "->"
-        if self.start_node is not None:
-            value = repr(self.start_node) + value
-        if self.end_node is not None:
-            value += repr(self.end_node)
+        if self.start_node() is not None:
+            value = repr(self.start_node()) + value
+        if self.end_node() is not None:
+            value += repr(self.end_node())
         return value
 
     def __eq__(self, other):
         try:
-            return (self.order == other.order and other.size == 1 and
-                    self.start_node is other.start_node and self.end_node is other.end_node and
-                    self.type == other.type and self.properties == other.properties)
+            return (self.nodes() == other.nodes() and other.size() == 1 and
+                    self.type() == other.type() and dict(self) == dict(other))
         except AttributeError:
             return False
 
@@ -385,7 +415,10 @@ class Relationship(Entity):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.nodes) ^ hash(self.type)
+        return hash(self.nodes()) ^ hash(self.type())
+
+    def type(self):
+        return self.__type
 
 
 class Path(TraversableGraph):
@@ -398,4 +431,4 @@ class Path(TraversableGraph):
         return path
 
     def __repr__(self):
-        return "<Path length=%r>" % self.length
+        return "<Path length=%r>" % self.length()
