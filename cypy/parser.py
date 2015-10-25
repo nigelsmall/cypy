@@ -7,90 +7,96 @@ from parsimonious.grammar import Grammar
 
 
 grammar = Grammar("""\
+
 Query        = RegularQuery
 RegularQuery = SingleQuery
-SingleQuery  = (Clause _?)+
-_            = ~"\\s+"
+SingleQuery  = (Clause _?)*
 Clause       = Match
-             / Create
+             / Unwind
+             / With
              / Return
 
-Identifier = ~"[A-Z 0-9 _?]*"i
+_            = ~"\\s+"
 
-Expression   = Disjunction
-             / XDisjunction
-             / Conjunction
-             / Complement
-             / Proposition
+Identifier = ~"[A-Z _][A-Z 0-9 _]*"i
 
-Disjunction  = XDisjunction ~"\\s+OR\\s+"i Expression
-XDisjunction = Conjunction ~"\\s+XOR\\s+"i Expression
-Conjunction  = Proposition ~"\\s+AND\\s+"i Expression
-Complement   = ~"NOT\\s+"i Expression
-Proposition  = Comparison
-             / Arithmetic
-             / Value
+Expression   = Expression12
 
-Comparison   = Equality
-             / Inequality
-             / LessThanOrEqual
-             / MoreThanOrEqual
-             / LessThan
-             / MoreThan
-             / In
-             / Contains
-             / StartsWith
-             / EndsWith
-Equality          = Arithmetic ~"\\s*=\\s*" Arithmetic
-Inequality        = Arithmetic ~"\\s*<>\\s*" Arithmetic
-LessThanOrEqual   = Arithmetic ~"\\s*<=\\s*" Arithmetic
-MoreThanOrEqual   = Arithmetic ~"\\s*>=\\s*" Arithmetic
-LessThan          = Arithmetic ~"\\s*<\\s*" Arithmetic
-MoreThan          = Arithmetic ~"\\s*>\\s*" Arithmetic
-In                = Arithmetic ~"\\s+IN\\s+"i Arithmetic
-Contains          = Arithmetic ~"\\s+CONTAINS\\s+"i Arithmetic
-StartsWith        = Arithmetic ~"\\s+STARTS\\s+WITH\\s+"i Arithmetic
-EndsWith          = Arithmetic ~"\\s+ENDS\\s+WITH\\s+"i Arithmetic
+Expression12 = Expression11 (_ ~"OR"i _ Expression11)*
 
-Arithmetic        = SumOrDifference
-                  / ProductOrQuotient
-                  / Exponent
-                  / Value
-SumOrDifference   = Sum
-                  / Difference
-Sum               = ProductOrQuotient ~"\\s*\\+\\s*" Arithmetic
-Difference        = ProductOrQuotient ~"\\s*\\-\\s*" Arithmetic
-ProductOrQuotient = Product
-                  / Quotient
-                  / Remainder
-                  / Value
-Product           = Exponent _? "*" _? Arithmetic
-Quotient          = Exponent _? "/" _? Arithmetic
-Remainder         = Exponent _? "%" _? Arithmetic
-Exponent          = Value _? "^" _? Arithmetic
+Expression11 = Expression10 (_ ~"XOR"i _ Expression10)*
 
-Value             = Parenthetical
-                  / Positive
-                  / Negative
-                  / MemberAccess
-                  / Subscript
-                  / Number
-                  / StringLiteral
-                  / Parameter
-                  / IsNull
-                  / Count
-Parenthetical     = "(" _? Expression _? ")"
-Positive          = "+" _? Expression
-Negative          = "-" _? Expression
-MemberAccess      = Identifier _? "." _? Identifier
-Subscript         = Identifier _? "[" _? Expression _? "]"
-Number            = Integer ("." Fraction)?
-Integer           = ~"[0-9]+"
-Fraction          = ~"\.[0-9]+"
-StringLiteral     = '""'
-Parameter         = "{" Identifier "}"
-IsNull            = Expression ~"IS"i ~"NULL"i
-Count             = ~"COUNT\\(\\s*"i Expression ~"\\s*\\)"
+Expression10 = Expression9 (_ ~"AND"i _ Expression9)*
+
+Expression9 = (~"NOT"i _ Expression9) / Expression8
+
+Expression8 = eq
+            / ne
+            / lt
+            / gt
+            / lte
+            / gte
+
+eq  = Expression7 (_? "=" _? Expression7)*
+ne  = Expression7 (_? "<>" _? Expression7)*
+lt  = Expression7 (_? "<" _? Expression7)*
+gt  = Expression7 (_? ">" _? Expression7)*
+lte = Expression7 (_? "<=" _? Expression7)*
+gte = Expression7 (_? ">=" _? Expression7)*
+
+Expression7 = Add
+            / Subtract
+Add         = Expression6 (_? "+" _? Expression6)*
+Subtract    = Expression6 (_? "-" _? Expression6)*
+
+Expression6 = Multiply
+            / Divide
+            / Modulo
+Multiply    = Expression5 (_? "*" _? Expression5)*
+Divide      = Expression5 (_? "/" _? Expression5)*
+Modulo      = Expression5 (_? "%" _? Expression5)*
+
+Expression5 = Expression4 (_? "^" _? Expression4)*
+
+Expression4   = Expression3
+              / UnaryAdd
+              / UnarySubtract
+UnaryAdd      = "+" _? Expression4
+UnarySubtract = "-" _? Expression4
+
+
+Expression3 = ContainerIndex
+            / CollectionSlice
+            / RegexMatch
+            / In
+            / StartsWith
+            / EndsWith
+            / Contains
+            / IsNull
+            / IsNotNull
+ContainerIndex  = Expression2 (_? "[" _? Expression _? "]")*
+CollectionSlice = Expression2 (_? "[" _? Expression? _? ".." _? Expression? _? "]")*
+RegexMatch      = Expression2 (_? "=~" _? Expression2)*
+In              = Expression2 (_? ~"IN"i _? Expression2)*
+StartsWith      = Expression2 (_? ~"STARTS\\s+WITH"i _? Expression2)*
+EndsWith        = Expression2 (_? ~"ENDS\\s+WITH"i _? Expression2)*
+Contains        = Expression2 (_? ~"CONTAINS"i _? Expression2)*
+IsNull          = Expression2 (_? ~"IS\\s+NULL"i)*
+IsNotNull       = Expression2 (_? ~"IS\\s+NOT\\s+NULL"i)*
+
+Expression2     = Expression1 (_? "." _? PropertyKey)*
+
+Expression1     = Number
+                / StringLiteral
+                / Parameter
+                / Parenthetical
+                / Identifier
+Number          = Integer ("." Fraction)?
+Integer         = ~"[0-9]+"
+Fraction        = ~"\.[0-9]+"
+StringLiteral   = '""'
+Parameter       = "{" Identifier "}"
+Parenthetical   = "(" _? Expression _? ")"
 
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart
@@ -114,17 +120,17 @@ RightArrowHead       = ">"
 RelationshipDetail   = "[" Identifier? RelationshipTypes? "]"
 RelationshipTypes    = ":" Identifier (_? "|" _? Identifier)*
 
-Match        = (~"OPTIONAL MATCH"i _? Pattern (_? Where)?)
-             / (~"MATCH"i _? Pattern (_? Where)?)
+Match        = (~"OPTIONAL\\s+MATCH"i / ~"MATCH"i) _? Pattern _? Where?
 Where        = ~"WHERE"i _? Expression
 
-Create       = (~"CREATE UNIQUE"i _? Pattern)
-             / (~"CREATE"i _? Pattern)
+Unwind       = ~"UNWIND"i
 
-Return       = (~"RETURN DISTINCT"i _? ReturnBody)
-             / (~"RETURN"i _? ReturnBody)
-ReturnBody   = ReturnItems (_? Order)? (_? Skip)? (_? Limit)?
-ReturnItems  = Identifier
+With         = ~"WITH"i
+
+Return       = (~"RETURN\\s+DISTINCT"i / ~"RETURN"i) _ ReturnBody
+ReturnBody   = ReturnItems (_ Order)? (_ Skip)? (_ Limit)?
+ReturnItems  = ReturnItem (_? "," _? ReturnItem)*
+ReturnItem   = Expression (_ ~"AS"i _ Identifier)?
 Order        = ~"ORDER BY"i
 Skip         = ~"SKIP"i
 Limit        = ~"LIMIT"i
