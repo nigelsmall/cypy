@@ -1,4 +1,4 @@
-Cypher Framework for Python
-===========================
+CyPy: Cypher Framework for Python
+=================================
 
 TODO
