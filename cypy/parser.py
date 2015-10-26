@@ -21,21 +21,7 @@
 from sys import argv
 from parsimonious.grammar import Grammar
 
-
-grammar = Grammar("""\
-
-Query          = RegularQuery
-RegularQuery   = SingleQuery
-SingleQuery    = (Clause _?)*
-Clause         = Match
-               / Unwind
-               / With
-               / Return
-
-_              = ~"\\s+"
-
-Identifier     = ~"[A-Z_][0-9A-Z_]*"i
-
+EXPRESSION_GRAMMAR = """\
 Expression     = Disjunction
 
 Disjunction    = XDisjunction (_? ~"OR"i _? XDisjunction)*
@@ -120,7 +106,9 @@ StringLiteral   = "'Bob'"
 Parameter       = "{" Identifier "}"
 Parenthetical   = "(" _? Expression _? ")"
 FunctionCall    = Identifier _? "(" ~"DISTINCT"i (_? Expression (_? "," _? Expression)*)? _? ")"
+"""
 
+PATTERN_GRAMMAR = """\
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart
 AnonymousPatternPart = PatternElement
@@ -142,6 +130,13 @@ Dash                 = "-"
 RightArrowHead       = ">"
 RelationshipDetail   = "[" Identifier? RelationshipTypes? "]"
 RelationshipTypes    = ":" Identifier (_? "|" _? Identifier)*
+"""
+
+READ_ONLY_QUERY_GRAMMAR = """\
+ReadOnlyClause = Match
+               / Unwind
+               / With
+               / Return
 
 Match        = (~"OPTIONAL\\s+MATCH"i / ~"MATCH"i) _ Pattern (_ Where)?
 Where        = ~"WHERE"i _ Expression
@@ -157,8 +152,26 @@ ReturnItem   = Expression (_ ~"AS"i _ Identifier)?
 Order        = ~"ORDER BY"i _? Identifier _? (~"ASC"i / ~"DESC"i)?
 Skip         = ~"SKIP"i _? Expression
 Limit        = ~"LIMIT"i _? Expression
+"""
 
-""")
+CORE_GRAMMAR = """\
+_              = ~"\\s+"
+Identifier     = ~"[A-Z_][0-9A-Z_]*"i
+"""
+
+
+grammar = Grammar("""\
+Query          = RegularQuery
+RegularQuery   = SingleQuery
+SingleQuery    = (Clause _?)*
+Clause         = ReadOnlyClause
+
+""" + "\n\n".join([
+    READ_ONLY_QUERY_GRAMMAR,
+    EXPRESSION_GRAMMAR,
+    PATTERN_GRAMMAR,
+    CORE_GRAMMAR,
+]))
 
 
 def main():
