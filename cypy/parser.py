@@ -24,63 +24,63 @@ from parsimonious.grammar import Grammar
 
 grammar = Grammar("""\
 
-Query        = RegularQuery
-RegularQuery = SingleQuery
-SingleQuery  = (Clause _?)*
-Clause       = Match
-             / Unwind
-             / With
-             / Return
+Query          = RegularQuery
+RegularQuery   = SingleQuery
+SingleQuery    = (Clause _?)*
+Clause         = Match
+               / Unwind
+               / With
+               / Return
 
-_            = ~"\\s+"
+_              = ~"\\s+"
 
-Identifier = ~"[A-Z_][0-9A-Z_]*"i
+Identifier     = ~"[A-Z_][0-9A-Z_]*"i
 
-Expression   = Expression12
+Expression     = Disjunction
 
-Expression12 = Expression11 (_? ~"OR"i _? Expression11)*
-Expression11 = Expression10 (_? ~"XOR"i _? Expression10)*
-Expression10 = Expression9 (_? ~"AND"i _? Expression9)*
-Expression9 = (~"NOT"i _? Expression9) / Expression8
+Disjunction    = XDisjunction (_? ~"OR"i _? XDisjunction)*
+XDisjunction   = Conjunction (_? ~"XOR"i _? Conjunction)*
+Conjunction    = Proposition (_? ~"AND"i _? Proposition)*
+Complement     = ~"NOT"i _? Proposition
+Proposition    = Complement
+               / Comparison
 
-Expression8 = eq
-            / ne
-            / lt
-            / gt
-            / lte
-            / gte
-            / Expression7
+Comparison     = Equality
+               / Inequality
+               / LtComparison
+               / GtComparison
+               / LteComparison
+               / GteComparison
+               / SumOrDiff
 
-eq  = Expression7 _? "=" _? Expression7
-ne  = Expression7 _? "<>" _? Expression7
-lt  = Expression7 _? "<" _? Expression7
-gt  = Expression7 _? ">" _? Expression7
-lte = Expression7 _? "<=" _? Expression7
-gte = Expression7 _? ">=" _? Expression7
+Equality       = SumOrDiff _? "=" _? SumOrDiff
+Inequality     = SumOrDiff _? "<>" _? SumOrDiff
+LtComparison   = SumOrDiff _? "<" _? SumOrDiff
+GtComparison   = SumOrDiff _? ">" _? SumOrDiff
+LteComparison  = SumOrDiff _? "<=" _? SumOrDiff
+GteComparison  = SumOrDiff _? ">=" _? SumOrDiff
 
-Expression7 = Add
-            / Subtract
-            / Expression6
-Add         = Expression6 (_? "+" _? Expression6)+
-Subtract    = Expression6 _? "-" _? Expression6
+SumOrDiff      = Sum
+               / Difference
+               / ProdOrQuot
+Sum            = ProdOrQuot (_? "+" _? ProdOrQuot)+
+Difference     = ProdOrQuot _? "-" _? ProdOrQuot
 
-Expression6 = Multiply
-            / Divide
-            / Modulo
-            / Expression5
-Multiply    = Expression5 (_? "*" _? Expression5)+
-Divide      = Expression5 _? "/" _? Expression5
-Modulo      = Expression5 _? "%" _? Expression5
+ProdOrQuot     = Product
+               / Quotient
+               / Remainder
+               / Exponent
+Product        = Exponent (_? "*" _? Exponent)+
+Quotient       = Exponent _? "/" _? Exponent
+Remainder      = Exponent _? "%" _? Exponent
 
-Expression5 = Exponent
-            / Expression4
-Exponent    = Expression4 _? "^" _? Expression4
+Exponent       = UnaryOperation (_? "^" _? UnaryOperation)?
 
-Expression4   = UnaryAdd
-              / UnarySubtract
-              / Expression3
-UnaryAdd      = "+" _? Expression4
-UnarySubtract = "-" _? Expression4
+UnaryOperation = UnaryAdd
+               / UnarySubtract
+               / Expression3
+UnaryAdd       = "+" _? UnaryOperation
+UnarySubtract  = "-" _? UnaryOperation
 
 
 Expression3 = ContainerIndex
