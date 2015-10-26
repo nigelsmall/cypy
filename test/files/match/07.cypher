@@ -1,0 +1,1 @@
+MATCH (n)-[:KNOWS]->(m) WHERE n.value = 40 RETURN count(n) AS number

@@ -34,7 +34,7 @@ Clause       = Match
 
 _            = ~"\\s+"
 
-Identifier = ~"[A-Z _][A-Z 0-9 _]*"i
+Identifier = ~"[A-Z_][0-9A-Z_]*"i
 
 Expression   = Expression12
 
@@ -106,6 +106,7 @@ Expression1     = Number
                 / StringLiteral
                 / Parameter
                 / Parenthetical
+                / FunctionCall
                 / Identifier
 Number          = Integer ("." Fraction)?
 Integer         = ~"[0-9]+"
@@ -113,6 +114,7 @@ Fraction        = ~"\.[0-9]+"
 StringLiteral   = '""'
 Parameter       = "{" Identifier "}"
 Parenthetical   = "(" _? Expression _? ")"
+FunctionCall    = Identifier _? "(" (_? Expression (_? "," _? Expression)*)? _? ")"
 
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart
@@ -136,12 +138,12 @@ RightArrowHead       = ">"
 RelationshipDetail   = "[" Identifier? RelationshipTypes? "]"
 RelationshipTypes    = ":" Identifier (_? "|" _? Identifier)*
 
-Match        = (~"OPTIONAL\\s+MATCH"i / ~"MATCH"i) _? Pattern _? Where?
-Where        = ~"WHERE"i _? Expression
+Match        = (~"OPTIONAL\\s+MATCH"i / ~"MATCH"i) _ Pattern (_ Where)?
+Where        = ~"WHERE"i _ Expression
 
 Unwind       = ~"UNWIND"i
 
-With         = ~"WITH"i
+With         = (~"WITH\\s+DISTINCT"i / ~"WITH"i) _ ReturnBody
 
 Return       = (~"RETURN\\s+DISTINCT"i / ~"RETURN"i) _ ReturnBody
 ReturnBody   = ReturnItems (_ Order)? (_ Skip)? (_ Limit)?

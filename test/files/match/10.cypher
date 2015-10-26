@@ -1,0 +1,1 @@
+MATCH n-[:KNOWS]->m, a-[:KNOWS]->b WHERE n.value = 40 WITH n, a MATCH (n)-[:FOO]->(a) RETURN count(n) AS number
