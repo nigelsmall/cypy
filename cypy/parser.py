@@ -38,13 +38,10 @@ Identifier = ~"[A-Z_][0-9A-Z_]*"i
 
 Expression   = Expression12
 
-Expression12 = Expression11 (_ ~"OR"i _ Expression11)*
-
-Expression11 = Expression10 (_ ~"XOR"i _ Expression10)*
-
-Expression10 = Expression9 (_ ~"AND"i _ Expression9)*
-
-Expression9 = (~"NOT"i _ Expression9) / Expression8
+Expression12 = Expression11 (_? ~"OR"i _? Expression11)*
+Expression11 = Expression10 (_? ~"XOR"i _? Expression10)*
+Expression10 = Expression9 (_? ~"AND"i _? Expression9)*
+Expression9 = (~"NOT"i _? Expression9) / Expression8
 
 Expression8 = eq
             / ne
@@ -52,31 +49,36 @@ Expression8 = eq
             / gt
             / lte
             / gte
+            / Expression7
 
-eq  = Expression7 (_? "=" _? Expression7)*
-ne  = Expression7 (_? "<>" _? Expression7)*
-lt  = Expression7 (_? "<" _? Expression7)*
-gt  = Expression7 (_? ">" _? Expression7)*
-lte = Expression7 (_? "<=" _? Expression7)*
-gte = Expression7 (_? ">=" _? Expression7)*
+eq  = Expression7 _? "=" _? Expression7
+ne  = Expression7 _? "<>" _? Expression7
+lt  = Expression7 _? "<" _? Expression7
+gt  = Expression7 _? ">" _? Expression7
+lte = Expression7 _? "<=" _? Expression7
+gte = Expression7 _? ">=" _? Expression7
 
 Expression7 = Add
             / Subtract
-Add         = Expression6 (_? "+" _? Expression6)*
-Subtract    = Expression6 (_? "-" _? Expression6)*
+            / Expression6
+Add         = Expression6 (_? "+" _? Expression6)+
+Subtract    = Expression6 _? "-" _? Expression6
 
 Expression6 = Multiply
             / Divide
             / Modulo
-Multiply    = Expression5 (_? "*" _? Expression5)*
-Divide      = Expression5 (_? "/" _? Expression5)*
-Modulo      = Expression5 (_? "%" _? Expression5)*
+            / Expression5
+Multiply    = Expression5 (_? "*" _? Expression5)+
+Divide      = Expression5 _? "/" _? Expression5
+Modulo      = Expression5 _? "%" _? Expression5
 
-Expression5 = Expression4 (_? "^" _? Expression4)*
+Expression5 = Exponent
+            / Expression4
+Exponent    = Expression4 _? "^" _? Expression4
 
-Expression4   = Expression3
-              / UnaryAdd
+Expression4   = UnaryAdd
               / UnarySubtract
+              / Expression3
 UnaryAdd      = "+" _? Expression4
 UnarySubtract = "-" _? Expression4
 
@@ -90,17 +92,20 @@ Expression3 = ContainerIndex
             / Contains
             / IsNull
             / IsNotNull
-ContainerIndex  = Expression2 (_? "[" _? Expression _? "]")*
-CollectionSlice = Expression2 (_? "[" _? Expression? _? ".." _? Expression? _? "]")*
-RegexMatch      = Expression2 (_? "=~" _? Expression2)*
-In              = Expression2 (_? ~"IN"i _? Expression2)*
-StartsWith      = Expression2 (_? ~"STARTS\\s+WITH"i _? Expression2)*
-EndsWith        = Expression2 (_? ~"ENDS\\s+WITH"i _? Expression2)*
-Contains        = Expression2 (_? ~"CONTAINS"i _? Expression2)*
-IsNull          = Expression2 (_? ~"IS\\s+NULL"i)*
-IsNotNull       = Expression2 (_? ~"IS\\s+NOT\\s+NULL"i)*
+            / Expression2
+ContainerIndex  = Expression2 _? "[" _? Expression _? "]"
+CollectionSlice = Expression2 _? "[" _? Expression? _? ".." _? Expression? _? "]"
+RegexMatch      = Expression2 _? "=~" _? Expression2
+In              = Expression2 _? ~"IN"i _? Expression2
+StartsWith      = Expression2 _? ~"STARTS\\s+WITH"i _? Expression2
+EndsWith        = Expression2 _? ~"ENDS\\s+WITH"i _? Expression2
+Contains        = Expression2 _? ~"CONTAINS"i _? Expression2
+IsNull          = Expression2 _? ~"IS\\s+NULL"i
+IsNotNull       = Expression2 _? ~"IS\\s+NOT\\s+NULL"i
 
-Expression2     = Expression1 (_? "." _? PropertyKey)*
+Expression2     = PropertyLookup
+                / Expression1
+PropertyLookup  = Expression1 _? "." _? PropertyKey
 
 Expression1     = Number
                 / StringLiteral
@@ -108,13 +113,13 @@ Expression1     = Number
                 / Parenthetical
                 / FunctionCall
                 / Identifier
-Number          = Integer ("." Fraction)?
+Number          = Integer Fraction?
 Integer         = ~"[0-9]+"
 Fraction        = ~"\.[0-9]+"
-StringLiteral   = '""'
+StringLiteral   = "'Bob'"
 Parameter       = "{" Identifier "}"
 Parenthetical   = "(" _? Expression _? ")"
-FunctionCall    = Identifier _? "(" (_? Expression (_? "," _? Expression)*)? _? ")"
+FunctionCall    = Identifier _? "(" ~"DISTINCT"i (_? Expression (_? "," _? Expression)*)? _? ")"
 
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart
@@ -149,9 +154,9 @@ Return       = (~"RETURN\\s+DISTINCT"i / ~"RETURN"i) _ ReturnBody
 ReturnBody   = ReturnItems (_ Order)? (_ Skip)? (_ Limit)?
 ReturnItems  = ReturnItem (_? "," _? ReturnItem)*
 ReturnItem   = Expression (_ ~"AS"i _ Identifier)?
-Order        = ~"ORDER BY"i
-Skip         = ~"SKIP"i
-Limit        = ~"LIMIT"i
+Order        = ~"ORDER BY"i _? Identifier _? (~"ASC"i / ~"DESC"i)?
+Skip         = ~"SKIP"i _? Expression
+Limit        = ~"LIMIT"i _? Expression
 
 """)
 

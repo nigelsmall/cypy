@@ -1,0 +1,1 @@
+MATCH (n) where n.age >= 30 RETURN n
