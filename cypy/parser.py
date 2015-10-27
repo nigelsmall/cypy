@@ -102,10 +102,12 @@ Expression1     = Number
 Number          = Integer Fraction?
 Integer         = ~"[0-9]+"
 Fraction        = ~"\.[0-9]+"
-StringLiteral   = "'Bob'"
+StringLiteral   = SingleQuotedString / DoubleQuotedString
+SingleQuotedString = "'" ~"[^']*" "'"
+DoubleQuotedString = "\\"" ~"[^\\"]*" "\\""
 Parameter       = "{" Identifier "}"
 Parenthetical   = "(" _? Expression _? ")"
-FunctionCall    = Identifier _? "(" ~"DISTINCT"i (_? Expression (_? "," _? Expression)*)? _? ")"
+FunctionCall    = Identifier _? "(" ~"DISTINCT"i? (_? Expression (_? "," _? Expression)*)? _? ")"
 """
 
 PATTERN_GRAMMAR = """\
@@ -120,14 +122,11 @@ Properties           = "{" _? (Property (_? "," _? Property)*)? _? "}"
 Property             = PropertyKey _? ":" _? PropertyValue
 PropertyKey          = Identifier
 PropertyValue        = Expression
-RelationshipPattern  = (LeftArrowHead Dash+ _? RelationshipDetail? _? Dash+ RightArrowHead)
-                     / (LeftArrowHead Dash+ _? RelationshipDetail? _? Dash+)
-                     / (Dash+ _? RelationshipDetail? _? Dash+ RightArrowHead)
-                     / (Dash+ _? RelationshipDetail? _? Dash+)
+RelationshipPattern  = (~"<-+" _? RelationshipDetail? _? ~"-+>")
+                     / (~"<-+" _? RelationshipDetail? _? ~"-+")
+                     / (~"-+" _? RelationshipDetail? _? ~"-+>")
+                     / (~"-+" _? RelationshipDetail? _? ~"-+")
 PatternElementChain  = RelationshipPattern _? NodePattern
-LeftArrowHead        = "<"
-Dash                 = "-"
-RightArrowHead       = ">"
 RelationshipDetail   = "[" Identifier? RelationshipTypes? "]"
 RelationshipTypes    = ":" Identifier (_? "|" _? Identifier)*
 """
@@ -149,7 +148,7 @@ Return       = (~"RETURN\\s+DISTINCT"i / ~"RETURN"i) _ ReturnBody
 ReturnBody   = ReturnItems (_ Order)? (_ Skip)? (_ Limit)?
 ReturnItems  = ReturnItem (_? "," _? ReturnItem)*
 ReturnItem   = Expression (_ ~"AS"i _ Identifier)?
-Order        = ~"ORDER BY"i _? Identifier _? (~"ASC"i / ~"DESC"i)?
+Order        = ~"ORDER\\s+BY"i _? Expression _? (~"ASC"i / ~"DESC"i)?
 Skip         = ~"SKIP"i _? Expression
 Limit        = ~"LIMIT"i _? Expression
 """
@@ -163,7 +162,7 @@ Identifier     = ~"[A-Z_][0-9A-Z_]*"i
 grammar = Grammar("""\
 Query          = RegularQuery
 RegularQuery   = SingleQuery
-SingleQuery    = (Clause _?)*
+SingleQuery    = (Clause _?)* ";"?
 Clause         = ReadOnlyClause
 
 """ + "\n\n".join([
