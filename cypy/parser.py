@@ -114,19 +114,15 @@ PATTERN_GRAMMAR = """\
 Pattern              = PatternPart (_? "," _? PatternPart)*
 PatternPart          = (Identifier _? "=" _?)? AnonymousPatternPart
 AnonymousPatternPart = PatternElement
-PatternElement       = NodePattern (_? PatternElementChain)*
-NodePattern          = ("(" Identifier? NodeLabels? _? Properties? ")")
+PatternElement       = NodePattern (_? RelationshipPattern _? NodePattern)*
+NodePattern          = ("(" Identifier? (NodeLabel)* _? Properties? ")")
                      / Identifier
-NodeLabels           = (_? ":" _? Identifier)+
+NodeLabel            = ":" _? Identifier _?
 Properties           = "{" _? (Property (_? "," _? Property)*)? _? "}"
 Property             = PropertyKey _? ":" _? PropertyValue
 PropertyKey          = Identifier
 PropertyValue        = Expression
-RelationshipPattern  = (~"<-+" _? RelationshipDetail? _? ~"-+>")
-                     / (~"<-+" _? RelationshipDetail? _? ~"-+")
-                     / (~"-+" _? RelationshipDetail? _? ~"-+>")
-                     / (~"-+" _? RelationshipDetail? _? ~"-+")
-PatternElementChain  = RelationshipPattern _? NodePattern
+RelationshipPattern  = "<"? "-"+ (RelationshipDetail "-"+)? ">"?
 RelationshipDetail   = "[" Identifier? RelationshipTypes? "]"
 RelationshipTypes    = ":" Identifier (_? "|" _? Identifier)*
 """

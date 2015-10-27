@@ -1,0 +1,1 @@
+MATCH (p1)-->(co:Company)<--(p2) RETURN p1, co, p2
