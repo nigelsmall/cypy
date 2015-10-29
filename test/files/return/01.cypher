@@ -1,1 +1,1 @@
-RETURN {x}
+RETURN 1
