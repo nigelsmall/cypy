@@ -165,6 +165,7 @@ class Graph(object):
 
     def __init__(self, nodes, relationships):
         self.__nodes = frozenset(nodes)
+        self.__nodes |= frozenset(chain(*(r.nodes() for r in relationships)))
         self.__relationships = frozenset(relationships)
 
     def __eq__(self, other):
@@ -237,8 +238,8 @@ class Graph(object):
         return frozenset(rel.type() for rel in self.__relationships)
 
     def keys(self):
-        return (frozenset(chain(*(node.keys() for node in self.nodes()))) |
-                frozenset(chain(*(rel.keys() for rel in self.relationships()))))
+        return (frozenset(chain(*(node.keys() for node in self.__nodes))) |
+                frozenset(chain(*(rel.keys() for rel in self.__relationships))))
 
 
 class TraversableGraph(Graph):
@@ -336,7 +337,7 @@ class Node(Entity):
         self.__labels = set(labels)
 
     def __repr__(self):
-        return "(%s)" % "".join(":" + label for label in self.__labels)
+        return "(%s {...})" % "".join(":" + label for label in self.__labels)
 
     def __eq__(self, other):
         try:
@@ -436,7 +437,7 @@ class Path(TraversableGraph):
         return "<Path length=%r>" % self.length()
 
 
-class Record(tuple):
+class Record(tuple, Graph):
 
     def __new__(cls, keys, values):
         if len(keys) == len(values):
@@ -446,6 +447,14 @@ class Record(tuple):
 
     def __init__(self, keys, values):
         self.__keys = tuple(keys)
+        nodes = []
+        relationships = []
+        for value in values:
+            if hasattr(value, "nodes"):
+                nodes.extend(value.nodes())
+            if hasattr(value, "relationships"):
+                relationships.extend(value.relationships())
+        Graph.__init__(self, nodes, relationships)
 
     def __repr__(self):
         s = ["("]

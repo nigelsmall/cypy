@@ -21,7 +21,7 @@
 from unittest import TestCase, main
 
 from cypy.primitive import PropertySet, PropertyContainer, TraversableGraph, \
-    Node, Relationship, Path, Record
+    Graph, Node, Relationship, Path, Record
 
 
 alice = Node("Person", "Employee", name="Alice", age=33)
@@ -237,15 +237,31 @@ class PropertyContainerTestCase(TestCase):
         container = PropertyContainer(name="Alice", age=33)
         assert set(container) == {"name", "age"}
 
-    def test_property_keys(self):
+    def test_keys(self):
         container = PropertyContainer(name="Alice", age=33)
         assert container.keys() == {"name", "age"}
+
+    def test_values(self):
+        container = PropertyContainer(name="Alice", age=33)
+        assert set(container.values()) == {'Alice', 33}
+
+    def test_update(self):
+        container = PropertyContainer(name="Alice")
+        container.update({"name": "Alice", "age": 33})
+        assert dict(container) == {"name": "Alice", "age": 33}
 
 
 class GraphTestCase(TestCase):
 
     graph = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob |
              carol_married_to_dave | dave_works_for_dave)
+
+    def test_can_infer_nodes_through_relationships(self):
+        graph = Graph([], [alice_knows_bob])
+        assert graph.order() == 2
+        assert graph.size() == 1
+        assert graph.nodes() == {alice, bob}
+        assert graph.relationships() == {alice_knows_bob}
 
     def test_equality(self):
         other_graph = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob |
@@ -384,6 +400,52 @@ class NodeTestCase(TestCase):
 
     def test_inequality_with_other_types(self):
         assert alice != "this is not a node"
+
+    def test_can_add_label(self):
+        node = Node("Person", name="Alice")
+        node.add_label("Employee")
+        assert node.labels() == {"Person", "Employee"}
+
+    def test_add_label_is_idempotent(self):
+        node = Node("Person", name="Alice")
+        node.add_label("Employee")
+        node.add_label("Employee")
+        assert node.labels() == {"Person", "Employee"}
+
+    def test_can_remove_label(self):
+        node = Node("Person", "Employee", name="Alice")
+        node.remove_label("Employee")
+        assert node.labels() == {"Person"}
+
+    def test_removing_non_existent_label_fails(self):
+        node = Node("Person", name="Alice")
+        with self.assertRaises(KeyError):
+            node.remove_label("Employee")
+
+    def test_can_discard_label(self):
+        node = Node("Person", "Employee", name="Alice")
+        node.discard_label("Employee")
+        assert node.labels() == {"Person"}
+
+    def test_discarding_non_existent_label_is_ignored(self):
+        node = Node("Person", name="Alice")
+        node.discard_label("Employee")
+        assert node.labels() == {"Person"}
+
+    def test_can_clear_labels(self):
+        node = Node("Person", "Employee", name="Alice")
+        node.clear_labels()
+        assert node.labels() == set()
+
+    def test_has_label(self):
+        node = Node("Person", name="Alice")
+        assert node.has_label("Person")
+        assert not node.has_label("Employee")
+
+    def test_update_labels(self):
+        node = Node("Person", name="Alice")
+        node.update_labels({"Person", "Employee"})
+        assert node.labels() == {"Person", "Employee"}
 
 
 class RelationshipTestCase(TestCase):
@@ -655,6 +717,11 @@ class RecordTestCase(TestCase):
         assert len(record) == 2
         assert record.keys() == ("name", "age")
         assert record.values() == ("Alice", 33)
+        assert repr(record)
+
+    def test_cannot_build_record_with_mismatched_keys_and_values(self):
+        with self.assertRaises(ValueError):
+            Record(["name"], ["Alice", 33])
 
     def test_can_coerce_record(self):
         record = Record(["name", "age"], ["Alice", 33])
@@ -667,6 +734,11 @@ class RecordTestCase(TestCase):
         assert record["one"] == "eins"
         assert record["two"] == "zwei"
         assert record["three"] == "drei"
+
+    def test_cannot_get_record_value_by_missing_name(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        with self.assertRaises(KeyError):
+            _ = record["four"]
 
     def test_can_get_record_value_by_index(self):
         record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
@@ -681,6 +753,36 @@ class RecordTestCase(TestCase):
         assert record[1:2] == Record(["two"], ["zwei"])
         assert record[1:3] == Record(["two", "three"], ["zwei", "drei"])
         assert record[1:] == Record(["two", "three"], ["zwei", "drei"])
+
+    def test_can_get_record_values_by_slice_using_getitem(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        assert record.__getitem__(slice(0, 2)) == Record(["one", "two"], ["eins", "zwei"])
+
+    def test_can_get_record_values_by_slice_using_getslice(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        try:
+            s = record.__getslice__(0, 2)
+        except AttributeError:
+            assert True
+        else:
+            assert s == Record(["one", "two"], ["eins", "zwei"])
+
+    def test_cannot_get_record_value_by_anything_else(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        with self.assertRaises(LookupError):
+            _ = record[None]
+
+    def test_record_can_be_exposed_as_graph(self):
+        keys = ["a", "b", "ab", "msg"]
+        values = [alice, bob, alice_knows_bob, "hello, world"]
+        record = Record(keys, values)
+        assert len(record) == 4
+        assert record.order() == 2
+        assert record.size() == 1
+        assert record.nodes() == {alice, bob}
+        assert record.relationships() == {alice_knows_bob}
+        assert list(record.keys()) == keys
+        assert list(record.values()) == values
 
 
 if __name__ == "__main__":
