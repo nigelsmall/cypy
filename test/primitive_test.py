@@ -21,7 +21,7 @@
 from unittest import TestCase, main
 
 from cypy.primitive import PropertySet, PropertyContainer, TraversableGraph, \
-    Node, Relationship, Path
+    Node, Relationship, Path, Record
 
 
 alice = Node("Person", "Employee", name="Alice", age=33)
@@ -180,6 +180,11 @@ class PropertyContainerTestCase(TestCase):
         container = PropertyContainer(name="Alice")
         assert "age" not in container
 
+    def test_clear(self):
+        container = PropertyContainer(name="Alice", age=33)
+        container.clear()
+        assert len(container) == 0
+
     def test_getter_where_exists(self):
         container = PropertyContainer(name="Alice", age=33)
         assert container["age"] == 33
@@ -187,6 +192,14 @@ class PropertyContainerTestCase(TestCase):
     def test_getter_where_non_existent(self):
         container = PropertyContainer(name="Alice")
         assert container["age"] is None
+
+    def test_get_method(self):
+        container = PropertyContainer(name="Alice", age=33)
+        assert container.get("age") == 33
+
+    def test_get_method_with_default(self):
+        container = PropertyContainer(name="Alice")
+        assert container.get("age", 33) == 33
 
     def test_setter_where_exists(self):
         container = PropertyContainer(name="Alice", age=33)
@@ -197,6 +210,14 @@ class PropertyContainerTestCase(TestCase):
         container = PropertyContainer(name="Alice")
         container["age"] = 34
         assert dict(container) == {"name": "Alice", "age": 34}
+
+    def test_setdefault_where_exists(self):
+        container = PropertyContainer(name="Alice", age=33)
+        assert container.setdefault("age", 44) == 33
+
+    def test_setdefault_where_missing(self):
+        container = PropertyContainer(name="Alice")
+        assert container.setdefault("age", 44) == 44
 
     def test_deleter_where_exists(self):
         container = PropertyContainer(name="Alice", age=33)
@@ -625,6 +646,41 @@ class SymmetricDifferenceTestCase(TestCase):
         assert graph.nodes() == (alice | bob | carol | dave).nodes()
         assert graph.relationships() == frozenset(alice_knows_bob | alice_likes_carol |
                                                   carol_married_to_dave | dave_works_for_dave)
+
+
+class RecordTestCase(TestCase):
+
+    def test_can_build_record(self):
+        record = Record(["name", "age"], ["Alice", 33])
+        assert len(record) == 2
+        assert record.keys() == ("name", "age")
+        assert record.values() == ("Alice", 33)
+
+    def test_can_coerce_record(self):
+        record = Record(["name", "age"], ["Alice", 33])
+        assert tuple(record) == ("Alice", 33)
+        assert list(record) == ["Alice", 33]
+        assert dict(record) == {"name": "Alice", "age": 33}
+
+    def test_can_get_record_value_by_name(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        assert record["one"] == "eins"
+        assert record["two"] == "zwei"
+        assert record["three"] == "drei"
+
+    def test_can_get_record_value_by_index(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        assert record[0] == "eins"
+        assert record[1] == "zwei"
+        assert record[2] == "drei"
+        assert record[-1] == "drei"
+
+    def test_can_get_record_values_by_slice(self):
+        record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
+        assert record[0:2] == Record(["one", "two"], ["eins", "zwei"])
+        assert record[1:2] == Record(["two"], ["zwei"])
+        assert record[1:3] == Record(["two", "three"], ["zwei", "drei"])
+        assert record[1:] == Record(["two", "three"], ["zwei", "drei"])
 
 
 if __name__ == "__main__":
