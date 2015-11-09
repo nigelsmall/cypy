@@ -23,7 +23,8 @@ from itertools import chain
 from .compat import integer, string, unicode, ustr
 
 
-__all__ = ["Graph", "TraversableGraph", "Node", "Relationship", "Path", "Record"]
+__all__ = ["Graph", "TraversableGraph", "Node", "Relationship", "Path",
+           "Record", "RecordList"]
 
 # Maximum and minimum integers supported up to Java 7.
 # Java 8 also supports unsigned long which can extend
@@ -163,10 +164,10 @@ class Graph(object):
     """ Arbitrary, unordered collection of nodes and relationships.
     """
 
-    def __init__(self, nodes, relationships):
-        self.__nodes = frozenset(nodes)
-        self.__nodes |= frozenset(chain(*(r.nodes() for r in relationships)))
-        self.__relationships = frozenset(relationships)
+    def __init__(self, nodes=None, relationships=None):
+        self.__nodes = frozenset(nodes or frozenset())
+        self.__relationships = frozenset(relationships or frozenset())
+        self.__nodes |= frozenset(chain(*(r.nodes() for r in self.__relationships)))
 
     def __eq__(self, other):
         try:
@@ -472,9 +473,7 @@ class Record(tuple, Graph):
         return r
 
     def __getitem__(self, item):
-        if isinstance(item, integer):
-            return tuple.__getitem__(self, item)
-        elif isinstance(item, string):
+        if isinstance(item, string):
             try:
                 return tuple.__getitem__(self, self.__keys.index(item))
             except ValueError:
@@ -483,7 +482,7 @@ class Record(tuple, Graph):
             return self.__class__(self.__keys[item.start:item.stop],
                                   tuple.__getitem__(self, item))
         else:
-            raise LookupError(item)
+            return tuple.__getitem__(self, item)
 
     def __getslice__(self, i, j):
         return self.__class__(self.__keys[i:j], tuple.__getslice__(self, i, j))
@@ -493,3 +492,33 @@ class Record(tuple, Graph):
 
     def values(self):
         return tuple(self)
+
+
+class RecordList(Graph):
+
+    def __init__(self, records):
+        keys = set()
+        nodes = []
+        relationships = []
+        for record in records:
+            keys.update(record.keys())
+            nodes.extend(record.nodes())
+            relationships.extend(record.relationships())
+        Graph.__init__(self, nodes, relationships)
+        self.__keys = frozenset(keys)
+        self.__records = list(records)
+
+    def __len__(self):
+        return len(self.__records)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return self.__class__(self.__records[item.start:item.stop])
+        else:
+            return self.__records[item]
+
+    def __iter__(self):
+        return iter(self.__records)
+
+    def keys(self):
+        return self.__keys

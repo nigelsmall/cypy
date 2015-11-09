@@ -21,7 +21,7 @@
 from unittest import TestCase
 
 from cypy.primitive import PropertySet, PropertyContainer, TraversableGraph, \
-    Graph, Node, Relationship, Path, Record
+    Graph, Node, Relationship, Path, Record, RecordList
 
 
 alice = Node("Person", "Employee", name="Alice", age=33)
@@ -34,6 +34,14 @@ alice_likes_carol = Relationship(alice, "LIKES", carol)
 carol_dislikes_bob = Relationship(carol, "DISLIKES", bob)
 carol_married_to_dave = Relationship(carol, "MARRIED_TO", dave)
 dave_works_for_dave = Relationship(dave, "WORKS_FOR", dave)
+
+record_keys = ["employee_id", "Person"]
+record_a = Record(record_keys, [1001, alice])
+record_b = Record(record_keys, [1002, bob])
+record_c = Record(record_keys, [1003, carol])
+record_d = Record(record_keys, [1004, dave])
+
+record_list = RecordList([record_a, record_b, record_c, record_d])
 
 
 class PropertyCoercionTestCase(TestCase):
@@ -770,7 +778,7 @@ class RecordTestCase(TestCase):
 
     def test_cannot_get_record_value_by_anything_else(self):
         record = Record(["one", "two", "three"], ["eins", "zwei", "drei"])
-        with self.assertRaises(LookupError):
+        with self.assertRaises(TypeError):
             _ = record[None]
 
     def test_record_can_be_exposed_as_graph(self):
@@ -784,3 +792,25 @@ class RecordTestCase(TestCase):
         assert record.relationships() == {alice_knows_bob}
         assert list(record.keys()) == keys
         assert list(record.values()) == values
+
+
+class RecordListTestCase(TestCase):
+
+    def test_record_list_length(self):
+        assert len(record_list) == 4
+
+    def test_record_iter(self):
+        listed = list(record_list)
+        assert listed == [record_a, record_b, record_c, record_d]
+
+    def test_record_list_get_item(self):
+        assert record_list[0] == record_a
+        assert record_list[1] == record_b
+        assert record_list[2] == record_c
+        assert record_list[3] == record_d
+
+    def test_record_list_get_slice(self):
+        assert record_list[0:2] == RecordList([record_a, record_b])
+
+    def test_record_keys(self):
+        assert record_list.keys() == set(record_keys)
