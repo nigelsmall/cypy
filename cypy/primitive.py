@@ -334,8 +334,8 @@ class Node(Entity):
     """
 
     def __init__(self, *labels, **properties):
-        Entity.__init__(self, self, **properties)
         self.__labels = set(labels)
+        Entity.__init__(self, self, **properties)
 
     def __repr__(self):
         return "(%s {...})" % "".join(":" + label for label in self.__labels)
