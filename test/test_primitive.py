@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from unittest import TestCase, main
+from unittest import TestCase
 
 from cypy.primitive import PropertySet, PropertyContainer, TraversableGraph, \
     Graph, Node, Relationship, Path, Record
@@ -717,7 +717,8 @@ class RecordTestCase(TestCase):
         assert len(record) == 2
         assert record.keys() == ("name", "age")
         assert record.values() == ("Alice", 33)
-        assert repr(record)
+        r = repr(record)
+        assert r.startswith("(") and r.endswith(")")
 
     def test_cannot_build_record_with_mismatched_keys_and_values(self):
         with self.assertRaises(ValueError):
@@ -783,7 +784,3 @@ class RecordTestCase(TestCase):
         assert record.relationships() == {alice_knows_bob}
         assert list(record.keys()) == keys
         assert list(record.values()) == values
-
-
-if __name__ == "__main__":
-    main()

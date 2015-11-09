@@ -455,17 +455,21 @@ class Record(tuple, Graph):
             if hasattr(value, "relationships"):
                 relationships.extend(value.relationships())
         Graph.__init__(self, nodes, relationships)
+        self.__repr = None
 
     def __repr__(self):
-        s = ["("]
-        for i, key in enumerate(self.__keys):
-            if i > 0:
-                s.append(", ")
-            s.append(repr(key))
-            s.append(": ")
-            s.append(repr(self[i]))
-        s.append(")")
-        return "".join(s)
+        r = self.__repr
+        if r is None:
+            s = ["("]
+            for i, key in enumerate(self.__keys):
+                if i > 0:
+                    s.append(", ")
+                s.append(repr(key))
+                s.append(": ")
+                s.append(repr(self[i]))
+            s.append(")")
+            r = self.__repr = "".join(s)
+        return r
 
     def __getitem__(self, item):
         if isinstance(item, integer):
