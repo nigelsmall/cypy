@@ -126,6 +126,10 @@ class GraphStructure(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __or__(self, other):
+        from .subgraph import Subgraph
+        return Subgraph.union(self, other)
+
 
 class GraphStore(GraphStructure):
     """ Low-level container for graph data.

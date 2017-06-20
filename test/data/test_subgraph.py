@@ -47,6 +47,15 @@ class SubgraphTestCase(TestCase):
         assert set(s.nodes()) == {a, b}
         assert set(s.relationships()) == set()
 
+    def test_should_be_able_to_create_subgraph_from_union_of_nodes_using_operator(self):
+        a = Node(name="Alice")
+        b = Node(name="Bob")
+        s = a | b
+        assert s.order() == 2
+        assert s.size() == 0
+        assert set(s.nodes()) == {a, b}
+        assert set(s.relationships()) == set()
+
     def test_should_be_able_to_create_subgraph_from_union_of_relationships(self):
         a = Node(name="Alice")
         b = Node(name="Bob")
@@ -57,6 +66,31 @@ class SubgraphTestCase(TestCase):
         assert s.order() == 3
         assert s.size() == 2
         assert set(s.nodes()) == {a, b, c}
+        assert set(s.relationships()) == {ab, bc}
+
+    def test_should_be_able_to_create_subgraph_from_union_of_relationships_using_operator(self):
+        a = Node(name="Alice")
+        b = Node(name="Bob")
+        c = Node(name="Carol")
+        ab = Relationship(a, "KNOWS", b)
+        bc = Relationship(b, "KNOWS", c)
+        s = ab | bc
+        assert s.order() == 3
+        assert s.size() == 2
+        assert set(s.nodes()) == {a, b, c}
+        assert set(s.relationships()) == {ab, bc}
+
+    def test_should_be_able_to_create_more_complex_union_using_operator(self):
+        a = Node(name="Alice")
+        b = Node(name="Bob")
+        c = Node(name="Carol")
+        d = Node(name="Dave")
+        ab = Relationship(a, "KNOWS", b)
+        bc = Relationship(b, "KNOWS", c)
+        s = ab | bc | c | d
+        assert s.order() == 4
+        assert s.size() == 2
+        assert set(s.nodes()) == {a, b, c, d}
         assert set(s.relationships()) == {ab, bc}
 
 
