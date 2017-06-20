@@ -22,7 +22,7 @@ Classes for modelling immutable segments of graph data.
 
 from itertools import chain
 
-from cypy.store import GraphStructure, FrozenGraphStore, MutableGraphStore
+from cypy.data.store import GraphStructure, FrozenGraphStore, MutableGraphStore
 
 
 class Subgraph(GraphStructure):

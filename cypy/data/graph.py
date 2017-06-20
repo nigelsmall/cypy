@@ -20,12 +20,11 @@
 In-memory graph data store.
 """
 
-
 from collections import Sequence, Set
 from itertools import chain
 
-from cypy.store import GraphStructure, MutableGraphStore
-from cypy.subgraph import Node, Subgraph
+from cypy.data.store import GraphStructure, MutableGraphStore
+from cypy.data.subgraph import Node, Subgraph
 
 
 class Graph(GraphStructure):

@@ -16,9 +16,5 @@
 # limitations under the License.
 
 
-from cypy.encoding import *
-from cypy.graph import *
-from cypy.lex import *
-from cypy.store import *
-from cypy.subgraph import *
-from cypy.values import *
+from cypy.data import *
+from cypy.lang import *

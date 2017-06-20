@@ -27,7 +27,7 @@ from threading import RLock
 from uuid import UUID, uuid4
 
 from cypy.compat import unicode
-from cypy.values import PropertyRecord, PropertyDict
+from cypy.data.values import PropertyRecord, PropertyDict
 
 NodeEntry = namedtuple("NodeEntry", ["labels", "properties"])
 RelationshipEntry = namedtuple("RelationshipEntry", ["type", "nodes", "properties"])

@@ -17,11 +17,11 @@
 
 
 from re import compile as re_compile
-from unicodedata import category
 from sys import version_info
+from unicodedata import category
 
-from cypy.subgraph import Node, Relationship
-from cypy.graph import NodeView, RelationshipView
+from cypy.data.graph import NodeView, RelationshipView
+from cypy.data.subgraph import Node, Relationship
 
 
 if version_info >= (3,):
