@@ -249,6 +249,12 @@ class Relationship(GraphStructure):
     def nodes(self):
         return self._nodes
 
+    def start_node(self):
+        return self._nodes[0]
+
+    def end_node(self):
+        return self._nodes[-1]
+
     def keys(self):
         return self._store.relationship_properties(self._uuid).keys()
 
