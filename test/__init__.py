@@ -17,7 +17,3 @@ def main():
         print(node)
     for relationship in g.relationships():
         print(relationship)
-
-
-if __name__ == "__main__":
-    main()
