@@ -19,7 +19,8 @@
 from collections import OrderedDict
 from unittest import TestCase
 
-from cypy import cypher_repr, cypher_escape, Node, Relationship  #, Path
+from cypy.data import Node, Relationship
+from cypy.lang import cypher_repr, cypher_escape
 
 
 class CypherEscapeTestCase(TestCase):

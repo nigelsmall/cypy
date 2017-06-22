@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-from cypy import Graph, Node, Relationship
+from cypy.data import Graph, Node, Relationship
 
 
 def main():

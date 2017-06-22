@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy import PropertyDict, Subgraph, Node, Relationship
+from cypy.data import PropertyDict, Subgraph, Node, Relationship
 
 
 alice = Node("Person", "Employee", name="Alice", age=33)

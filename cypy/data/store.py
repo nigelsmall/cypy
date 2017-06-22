@@ -26,7 +26,6 @@ from operator import and_ as and_operator
 from threading import RLock
 from uuid import UUID, uuid4
 
-from cypy.compat import unicode
 from cypy.data.abc import GraphStructure
 from cypy.data.values import PropertyRecord, PropertyDict
 
