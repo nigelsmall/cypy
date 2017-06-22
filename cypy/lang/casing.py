@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- encoding: utf-8 -*-
 
 # Copyright 2011-2017, Nigel Small
 #
@@ -16,6 +16,27 @@
 # limitations under the License.
 
 
-from cypy.lang.casing import *
-from cypy.lang.encoding import *
-from cypy.lang.lex import *
+from re import compile as re_compile
+
+
+WORD_FIRST = re_compile(r"(.)([A-Z][a-z]+)")
+WORD_ALL = re_compile(r"([a-z0-9])([A-Z])")
+
+
+def snake_case(s):
+    words = s.replace("_", " ").replace("-", " ").split()
+    return "_".join(word.lower() for word in words)
+
+
+def title_case(s):
+    s1 = WORD_FIRST.sub(r"\1 \2", s)
+    return WORD_ALL.sub(r"\1 \2", s1).title()
+
+
+def relationship_case(s):
+    s1 = WORD_FIRST.sub(r"\1_\2", s)
+    return WORD_ALL.sub(r"\1_\2", s1).upper()
+
+
+def label_case(s):
+    return "".join(word.title() for word in s.split("_"))

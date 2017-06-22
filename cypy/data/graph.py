@@ -23,7 +23,8 @@ In-memory graph data store.
 from collections import Sequence, Set
 from itertools import chain
 
-from cypy.data.store import GraphStructure, MutableGraphStore
+from cypy.data.store import MutableGraphStore
+from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship
 from cypy.data.subgraph import Node, Subgraph
 
 
@@ -98,7 +99,7 @@ class NodeSelection(object):
         self._store.remove_nodes(self._selection)
 
 
-class NodeView(GraphStructure):
+class NodeView(GraphNode):
     """ Live view of a node in a graph.
     """
 
@@ -206,7 +207,7 @@ class RelationshipSelection(object):
         self._store.remove_relationships(self._selection)
 
 
-class RelationshipView(GraphStructure):
+class RelationshipView(GraphRelationship):
     """ Live view of a relationship in a graph.
     """
 
@@ -248,7 +249,8 @@ class RelationshipView(GraphStructure):
         return self._uuid
 
     def type(self):
-        return self._store.relationship_type(self._uuid)
+        from cypy.lang.casing import relationship_case
+        return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
 
     def nodes(self):
         """ Return the nodes connected by this relationship.

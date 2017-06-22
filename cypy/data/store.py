@@ -27,6 +27,7 @@ from threading import RLock
 from uuid import UUID, uuid4
 
 from cypy.compat import unicode
+from cypy.data.abc import GraphStructure
 from cypy.data.values import PropertyRecord, PropertyDict
 
 NodeEntry = namedtuple("NodeEntry", ["labels", "properties"])
@@ -105,30 +106,6 @@ class ReactiveSet(set):
         set.clear(self)
         if callable(self._on_remove):
             self._on_remove(*elements)
-
-
-class GraphStructure(object):
-    """ A graph data storage object that is backed by a :class:`.GraphStore`.
-
-    This class defines a graph data storage protocol that allows different
-    storage objects to interact via a common store format.
-    """
-
-    def __graph_store__(self):
-        raise NotImplementedError()
-
-    def __eq__(self, other):
-        try:
-            return self.__graph_store__() == other.__graph_store__()
-        except AttributeError:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __or__(self, other):
-        from .subgraph import Subgraph
-        return Subgraph.union(self, other)
 
 
 class GraphStore(GraphStructure):
@@ -240,6 +217,14 @@ class GraphStore(GraphStructure):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __hash__(self):
+        value = 0
+        for node in self._nodes:
+            value ^= hash(node)
+        for relationship in self._relationships:
+            value ^= hash(relationship)
+        return value
 
     def _build_nodes_by_label(self):
         data = {}
@@ -404,7 +389,7 @@ class FrozenGraphStore(GraphStore):
     @classmethod
     def relationship_entry(cls, entry):
         type_, nodes, properties = entry
-        return RelationshipEntry(unicode(type_), tuple(nodes), PropertyRecord(properties))
+        return RelationshipEntry(type_, tuple(nodes), PropertyRecord(properties))
 
     def __init__(self, graph_store=None):
         if graph_store is None:
@@ -452,7 +437,7 @@ class MutableGraphStore(GraphStore):
     @classmethod
     def relationship_entry(cls, entry):
         type_, nodes, properties = entry
-        return RelationshipEntry(unicode(type_), tuple(nodes), PropertyDict(properties))
+        return RelationshipEntry(type_, tuple(nodes), PropertyDict(properties))
 
     def __init__(self, graph_store=None):
         super(MutableGraphStore, self).__init__()

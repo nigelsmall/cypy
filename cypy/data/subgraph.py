@@ -22,7 +22,8 @@ Classes for modelling immutable segments of graph data.
 
 from itertools import chain
 
-from cypy.data.store import GraphStructure, FrozenGraphStore, MutableGraphStore
+from cypy.data.store import FrozenGraphStore, MutableGraphStore
+from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship
 
 
 class Subgraph(GraphStructure):
@@ -59,6 +60,27 @@ class Subgraph(GraphStructure):
         # TODO: something better here
         return "Subgraph" + repr(self._store)
 
+    def __bool__(self):
+        return self._store.relationship_count() != 0
+
+    def __nonzero__(self):
+        return self._store.relationship_count() != 0
+
+    def __len__(self):
+        return self._store.relationship_count()
+
+    def __eq__(self, other):
+        try:
+            return self.__graph_store__() == other.__graph_store__()
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.__graph_store__())
+
     def order(self, *labels):
         return self._store.node_count(*labels)
 
@@ -86,7 +108,7 @@ class Subgraph(GraphStructure):
             yield relationship
 
 
-class Node(GraphStructure):
+class Node(GraphNode):
     """ Immutable node object.
     """
 
@@ -106,6 +128,12 @@ class Node(GraphStructure):
             return "(:{} {!r})".format(":".join(self.labels()), dict(self))
         else:
             return "({!r})".format(dict(self))
+
+    def __bool__(self):
+        return bool(self._store.node_properties(self._uuid))
+
+    def __nonzero__(self):
+        return bool(self._store.node_properties(self._uuid))
 
     def __len__(self):
         return len(self._store.node_properties(self._uuid))
@@ -160,7 +188,7 @@ class Node(GraphStructure):
         return self._store.node_properties(self._uuid).items()
 
 
-class Relationship(GraphStructure):
+class Relationship(GraphRelationship):
     """ Immutable relationship object.
     """
 
@@ -200,6 +228,12 @@ class Relationship(GraphStructure):
             return "()-[:{} {}]->()".format(self.type(), dict(self))
         else:
             return "()-[:{}]->()".format(self.type())
+
+    def __bool__(self):
+        return bool(self._store.relationship_properties(self._uuid))
+
+    def __nonzero__(self):
+        return bool(self._store.relationship_properties(self._uuid))
 
     def __len__(self):
         return len(self._store.relationship_properties(self._uuid))
@@ -244,16 +278,23 @@ class Relationship(GraphStructure):
         return 1
 
     def type(self):
-        return self._store.relationship_type(self._uuid)
+        from cypy.lang.casing import relationship_case
+        return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
 
     def nodes(self):
         return self._nodes
 
     def start_node(self):
-        return self._nodes[0]
+        try:
+            return self._nodes[0]
+        except IndexError:
+            return None
 
     def end_node(self):
-        return self._nodes[-1]
+        try:
+            return self._nodes[-1]
+        except IndexError:
+            return None
 
     def keys(self):
         return self._store.relationship_properties(self._uuid).keys()
