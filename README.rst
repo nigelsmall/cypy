@@ -5,8 +5,8 @@ CyPy
 .. image:: https://travis-ci.org/technige/cypy.svg?branch=master
     :target: https://travis-ci.org/technige/cypy
 
-.. image:: https://coveralls.io/repos/github/technige/cypy/badge.svg
-    :target: https://coveralls.io/github/technige/cypy
+.. image:: https://coveralls.io/repos/github/technige/cypy/badge.svg?branch=master
+    :target: https://coveralls.io/github/technige/cypy?branch=master
 
 
 **CyPy** is a `Cypher <https://neo4j.com/developer/cypher/>`_ resource library for Python.
