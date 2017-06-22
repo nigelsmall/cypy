@@ -156,15 +156,15 @@ class SubgraphTestCase(TestCase):
                                       carol_married_to_dave, dave_works_for_dave}
 
     def test_order(self):
-        assert Subgraph.order(self.subgraph) == 4
+        assert Subgraph(self.subgraph).order() == 4
 
     def test_size(self):
-        assert Subgraph.size(self.subgraph) == 5
+        assert Subgraph(self.subgraph).size() == 5
 
     def test_can_infer_nodes_through_relationships(self):
         subgraph = Subgraph(alice_knows_bob)
-        assert Subgraph.order(subgraph) == 2
-        assert Subgraph.size(subgraph) == 1
+        assert Subgraph(subgraph).order() == 2
+        assert Subgraph(subgraph).size() == 1
         assert set(subgraph.nodes()) == {alice, bob}
         assert set(subgraph.relationships()) == {alice_knows_bob}
 
@@ -213,10 +213,10 @@ class SubgraphTestCase(TestCase):
 #         assert len(self.walkable) == 2
 #
 #     def test_order(self):
-#         assert Subgraph.order(self.walkable) == 3
+#         assert Subgraph(self.walkable).order() == 3
 #
 #     def test_size(self):
-#         assert Subgraph.size(self.walkable) == 2
+#         assert Subgraph(self.walkable).size() == 2
 #
 #     def test_equality(self):
 #         other_subgraph = Walkable(self.sequence)
@@ -295,10 +295,10 @@ class SubgraphTestCase(TestCase):
 class NodeTestCase(TestCase):
 
     def test_order(self):
-        assert Subgraph.order(alice) == 1
+        assert Subgraph(alice).order() == 1
 
     def test_size(self):
-        assert Subgraph.size(alice) == 0
+        assert Subgraph(alice).size() == 0
 
     def test_empty_node(self):
         n = Node()
@@ -315,8 +315,8 @@ class NodeTestCase(TestCase):
         assert dict(alice) == {"name": "Alice", "age": 33}
         assert dict(alice)["name"] == "Alice"
         assert alice["name"] == "Alice"
-        assert Subgraph.order(alice) == 1
-        assert Subgraph.size(alice) == 0
+        assert Subgraph(alice).order() == 1
+        assert Subgraph(alice).size() == 0
 
     def test_equality(self):
         other_node = Node("Person", "Employee", name="Alice", age=33)
@@ -342,10 +342,10 @@ class RelationshipTestCase(TestCase):
         assert nodes == (alice, bob)
 
     def test_order(self):
-        assert Subgraph.order(alice_knows_bob) == 2
+        assert Subgraph(alice_knows_bob).order() == 2
 
     def test_size(self):
-        assert Subgraph.size(alice_knows_bob) == 1
+        assert Subgraph(alice_knows_bob).size() == 1
 
     def test_relationship(self):
         assert alice_knows_bob.start_node() == alice
@@ -354,16 +354,16 @@ class RelationshipTestCase(TestCase):
         assert alice_knows_bob.type() == "KNOWS"
         assert dict(alice_knows_bob) == {"since": 1999}
         assert alice_knows_bob["since"] == 1999
-        assert Subgraph.order(alice_knows_bob) == 2
-        assert Subgraph.size(alice_knows_bob) == 1
+        assert Subgraph(alice_knows_bob).order() == 2
+        assert Subgraph(alice_knows_bob).size() == 1
         assert set(alice_knows_bob.nodes()) == {alice, bob}
 
     def test_loop(self):
         assert dave_works_for_dave.start_node() == dave
         assert dave_works_for_dave.end_node() == dave
         # assert list(walk(dave_works_for_dave)) == [dave, dave_works_for_dave, dave]
-        assert Subgraph.order(dave_works_for_dave) == 1
-        assert Subgraph.size(dave_works_for_dave) == 1
+        assert Subgraph(dave_works_for_dave).order() == 1
+        assert Subgraph(dave_works_for_dave).size() == 1
         assert set(dave_works_for_dave.nodes()) == {dave}
 
     def test_construction_from_no_arguments(self):
@@ -438,10 +438,10 @@ class RelationshipLoopTestCase(TestCase):
         assert nodes == (alice, alice)
 
     def test_order(self):
-        assert Subgraph.order(self.loop) == 1
+        assert Subgraph(self.loop).order() == 1
 
     def test_size(self):
-        assert Subgraph.size(self.loop) == 1
+        assert Subgraph(self.loop).size() == 1
 
 
 # class PathTestCase(TestCase):
@@ -459,10 +459,10 @@ class RelationshipLoopTestCase(TestCase):
 #         assert relationships == (alice_knows_bob, alice_knows_bob, alice_likes_carol)
 #
 #     def test_order(self):
-#         assert Subgraph.order(self.path) == 3
+#         assert Subgraph(self.path).order() == 3
 #
 #     def test_size(self):
-#         assert Subgraph.size(self.path) == 2
+#         assert Subgraph(self.path).size() == 2
 #
 #     def test_length(self):
 #         assert len(self.path) == 3
@@ -470,8 +470,8 @@ class RelationshipLoopTestCase(TestCase):
 #     def test_construction_of_path_length_0(self):
 #         sequence = [alice]
 #         path = Path(*sequence)
-#         assert Subgraph.order(path) == 1
-#         assert Subgraph.size(path) == 0
+#         assert Subgraph(path).order() == 1
+#         assert Subgraph(path).size() == 0
 #         assert len(path) == 0
 #         assert set(path.nodes()) == {alice}
 #         assert set(path.relationships()) == set()
@@ -483,8 +483,8 @@ class RelationshipLoopTestCase(TestCase):
 #     def test_construction_of_path_length_1(self):
 #         sequence = [alice, alice_knows_bob, bob]
 #         path = Path(*sequence)
-#         assert Subgraph.order(path) == 2
-#         assert Subgraph.size(path) == 1
+#         assert Subgraph(path).order() == 2
+#         assert Subgraph(path).size() == 1
 #         assert len(path) == 1
 #         assert set(path.nodes()) == {alice, bob}
 #         assert set(path.relationships()) == {alice_knows_bob}
@@ -496,8 +496,8 @@ class RelationshipLoopTestCase(TestCase):
 #     def test_construction_of_path_length_2(self):
 #         sequence = [alice, alice_knows_bob, bob, carol_dislikes_bob, carol]
 #         path = Path(*sequence)
-#         assert Subgraph.order(path) == 3
-#         assert Subgraph.size(path) == 2
+#         assert Subgraph(path).order() == 3
+#         assert Subgraph(path).size() == 2
 #         assert len(path) == 2
 #         assert set(path.nodes()) == {alice, bob, carol}
 #         assert set(path.relationships()) == {alice_knows_bob, carol_dislikes_bob}
@@ -510,8 +510,8 @@ class RelationshipLoopTestCase(TestCase):
 #         sequence = [alice, alice_knows_bob, bob, carol_dislikes_bob, carol,
 #                     alice_likes_carol, alice, alice_knows_bob, bob]
 #         path = Path(*sequence)
-#         assert Subgraph.order(path) == 3
-#         assert Subgraph.size(path) == 3
+#         assert Subgraph(path).order() == 3
+#         assert Subgraph(path).size() == 3
 #         assert len(path) == 4
 #         assert set(path.nodes()) == {alice, bob, carol}
 #         assert set(path.relationships()) == {alice_knows_bob, alice_likes_carol, carol_dislikes_bob}
@@ -523,8 +523,8 @@ class RelationshipLoopTestCase(TestCase):
 #     def test_construction_of_path_with_loop(self):
 #         sequence = [carol, carol_married_to_dave, dave, dave_works_for_dave, dave]
 #         path = Path(*sequence)
-#         assert Subgraph.order(path) == 2
-#         assert Subgraph.size(path) == 2
+#         assert Subgraph(path).order() == 2
+#         assert Subgraph(path).size() == 2
 #         assert len(path) == 2
 #         assert set(path.nodes()) == {carol, dave}
 #         assert set(path.relationships()) == {carol_married_to_dave, dave_works_for_dave}
@@ -645,8 +645,8 @@ class UnionTestCase(TestCase):
         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
         graph = graph_1 | graph_2
-        assert Subgraph.order(graph) == 4
-        assert Subgraph.size(graph) == 5
+        assert Subgraph(graph).order() == 4
+        assert Subgraph(graph).size() == 5
         assert set(graph.nodes()) == {alice, bob, carol, dave}
 
 
@@ -656,8 +656,8 @@ class UnionTestCase(TestCase):
 #         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
 #         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
 #         graph = graph_1 & graph_2
-#         assert Subgraph.order(graph) == 2
-#         assert Subgraph.size(graph) == 1
+#         assert Subgraph(graph).order() == 2
+#         assert Subgraph(graph).size() == 1
 #         assert graph.nodes() == (bob | carol).nodes()
 
 
@@ -667,8 +667,8 @@ class UnionTestCase(TestCase):
 #         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
 #         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
 #         graph = graph_1 - graph_2
-#         assert Subgraph.order(graph) == 3
-#         assert Subgraph.size(graph) == 2
+#         assert Subgraph(graph).order() == 3
+#         assert Subgraph(graph).size() == 2
 #         assert graph.nodes() == (alice | bob | carol).nodes()
 
 
@@ -678,8 +678,8 @@ class UnionTestCase(TestCase):
 #         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
 #         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
 #         graph = graph_1 ^ graph_2
-#         assert Subgraph.order(graph) == 4
-#         assert Subgraph.size(graph) == 4
+#         assert Subgraph(graph).order() == 4
+#         assert Subgraph(graph).size() == 4
 #         assert graph.nodes() == (alice | bob | carol | dave).nodes()
 #         assert graph.relationships() == frozenset(alice_knows_bob | alice_likes_carol |
 #                                                   carol_married_to_dave | dave_works_for_dave)
