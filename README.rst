@@ -14,6 +14,23 @@ It provides facilities for client-side graph data storage as well as tools for w
 The library uses terminology consistent with `Neo4j <https://neo4j.com/>`_ (*nodes*, *relationships*, *labels*, *properties*, etc) and provides a convenient local model for remote Neo4j interactions.
 
 
+``cypy.data.abc``
+=================
+Abstract base classes for graph data types.
+
+GraphStructure
+--------------
+TODO
+
+GraphNode
+---------
+TODO
+
+GraphRelationship
+-----------------
+TODO
+
+
 ``cypy.data.graph``
 ===================
 In-memory graph data store.
@@ -22,39 +39,26 @@ Graph
 -----
 General purpose mutable graph data type
 
+NodeSelection
+-------------
+TODO
+
 NodeView
 --------
 Accessor for a *node* in a `Graph`_
+
+RelationshipSelection
+---------------------
+TODO
 
 RelationshipView
 ----------------
 Accessor for a *relationship* in a `Graph`_.
 
 
-``cypy.data.subgraph``
-======================
-Classes for modelling immutable segments of graph data.
-
-Node
-----
-TODO
-
-Relationship
-------------
-TODO
-
-Subgraph
---------
-TODO
-
-
 ``cypy.data.store``
 ===================
 Low-level graph data storage classes.
-
-GraphStructure
---------------
-TODO
 
 GraphStore
 ----------
@@ -66,6 +70,27 @@ TODO
 
 MutableGraphStore
 -----------------
+TODO
+
+ReactiveSet
+-----------
+TODO
+
+
+``cypy.data.subgraph``
+======================
+Classes for modelling immutable segments of graph data.
+
+Subgraph
+--------
+TODO
+
+Node
+----
+TODO
+
+Relationship
+------------
 TODO
 
 
@@ -91,4 +116,67 @@ TODO
 
 PropertyDict
 ------------
+TODO
+
+
+``cypy.lang.casing``
+====================
+TODO
+
+snake_case
+----------
+TODO
+
+title_case
+----------
+TODO
+
+relationship_case
+-----------------
+TODO
+
+label_case
+----------
+TODO
+
+
+``cypy.lang.encoding``
+======================
+TODO
+
+CypherEncoder
+-------------
+TODO
+
+LabelSetView
+------------
+TODO
+
+PropertyDictView
+----------------
+TODO
+
+PropertySelector
+----------------
+TODO
+
+cypher_escape
+-------------
+TODO
+
+cypher_repr
+-----------
+TODO
+
+cypher_str
+----------
+TODO
+
+
+``cypy.lang.lex``
+=================
+TODO
+
+CypherLexer
+-----------
 TODO
