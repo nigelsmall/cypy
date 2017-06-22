@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-from cypy.lang.encoding import cypher_escape
+from cypy.encoding import cypher_escape
 
 
 class LabelSetView(object):

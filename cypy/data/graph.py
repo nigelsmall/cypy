@@ -23,8 +23,8 @@ In-memory graph data store.
 from collections import Sequence, Set
 from itertools import chain
 
-from cypy.data.store import MutableGraphStore
 from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship
+from cypy.data.store import MutableGraphStore
 from cypy.data.subgraph import Node, Subgraph
 
 
@@ -249,7 +249,7 @@ class RelationshipView(GraphRelationship):
         return self._uuid
 
     def type(self):
-        from cypy.lang.casing import relationship_case
+        from cypy.casing import relationship_case
         return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
 
     def nodes(self):

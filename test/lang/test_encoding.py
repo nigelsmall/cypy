@@ -20,7 +20,7 @@ from collections import OrderedDict
 from unittest import TestCase
 
 from cypy.data.subgraph import Node, Relationship
-from cypy.lang.encoding import cypher_repr, cypher_escape
+from cypy.encoding import cypher_repr, cypher_escape
 
 
 class CypherEscapeTestCase(TestCase):

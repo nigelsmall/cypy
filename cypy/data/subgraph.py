@@ -278,7 +278,7 @@ class Relationship(GraphRelationship):
         return 1
 
     def type(self):
-        from cypy.lang.casing import relationship_case
+        from cypy.casing import relationship_case
         return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
 
     def nodes(self):

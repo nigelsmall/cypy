@@ -50,6 +50,8 @@ class GraphStructure(object):
 
 
 class GraphNode(GraphStructure, Mapping):
+    """ Abstract base class for a node within a graph.
+    """
 
     @abstractmethod
     def labels(self):
@@ -59,6 +61,8 @@ class GraphNode(GraphStructure, Mapping):
 
 
 class GraphRelationship(GraphStructure, Mapping):
+    """ Abstract base class for a relationship within a graph.
+    """
 
     @abstractmethod
     def type(self):

@@ -21,7 +21,7 @@ from operator import xor as xor_operator
 
 from cypy.compat import unicode, integer
 from cypy.data.values import Value, Record, iter_items
-from cypy.lang.encoding import cypher_repr, cypher_str
+from cypy.encoding import cypher_repr, cypher_str
 
 
 class PropertyValue(Value):
