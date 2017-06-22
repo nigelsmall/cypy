@@ -21,18 +21,12 @@ try:
 except ImportError:
     from distutils.core import setup, find_packages
 
-
-__author__ = "Nigel Small <technige@nige.tech>"
-__copyright__ = "2011-2017, Nigel Small"
-__email__ = "cypy@nige.tech"
-__license__ = "Apache License, Version 2.0"
-__package__ = "cypy"
-__version__ = "1.0.0a1"
+from cypy.meta import __distribution__, __version__, __author__, __email__, __license__
 
 
 packages = find_packages(exclude=("test", "test.*"))
 package_metadata = {
-    "name": __package__,
+    "name": __distribution__,
     "version": __version__,
     "description": "Cypher resource library for Python",
     "long_description": "",
@@ -52,7 +46,6 @@ package_metadata = {
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
