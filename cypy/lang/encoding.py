@@ -20,8 +20,7 @@ from re import compile as re_compile
 from sys import version_info
 from unicodedata import category
 
-from cypy.data.graph import NodeView, RelationshipView
-from cypy.data.subgraph import Node, Relationship
+from cypy.data.abc import GraphNode, GraphRelationship
 
 
 if version_info >= (3,):
@@ -113,9 +112,9 @@ class CypherEncoder(object):
             return unicode(value)
         if isinstance(value, string):
             return self.encode_string(value)
-        if isinstance(value, (Node, NodeView)):
+        if isinstance(value, GraphNode):
             return self.encode_node(value)
-        if isinstance(value, (Relationship, RelationshipView)):
+        if isinstance(value, GraphRelationship):
             return self.encode_relationship(value)
         # TODO
         # if isinstance(value, Path):
