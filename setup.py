@@ -21,18 +21,22 @@ try:
 except ImportError:
     from distutils.core import setup, find_packages
 
-from cypy.meta import __distribution__, __version__, __author__, __email__, __license__
+from cypy.meta import __distribution__, __version__, __description__, __author__, __email__, __url__, __license__
+
+
+with open("README.rst") as f:
+    long_description = f.read()
 
 
 packages = find_packages(exclude=("test", "test.*"))
 package_metadata = {
     "name": __distribution__,
     "version": __version__,
-    "description": "Cypher resource library for Python",
-    "long_description": "",
+    "description": __description__,
+    "long_description": long_description,
     "author": __author__,
     "author_email": __email__,
-    "url": "http://nige.tech/cypy",
+    "url": __url__,
     "entry_points": {
     },
     "packages": packages,
