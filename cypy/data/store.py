@@ -26,8 +26,9 @@ from operator import and_ as and_operator
 from threading import RLock
 from uuid import UUID, uuid4
 
+from cypy.collections import ReactiveSet
 from cypy.data.abc import GraphStructure
-from cypy.data.values import PropertyRecord, PropertyDict
+from cypy.data.properties import PropertyDict, PropertyRecord
 
 NodeEntry = namedtuple("NodeEntry", ["labels", "properties"])
 RelationshipEntry = namedtuple("RelationshipEntry", ["type", "nodes", "properties"])
@@ -462,80 +463,6 @@ class MutableGraphStore(GraphStore):
                 # Remove from _relationships_by_node
                 for n_index, n_key in enumerate_nodes(n_keys):
                     discard_value(self._relationships_by_node, n_key, (r_key, n_index))
-
-
-class ReactiveSet(set):
-    """ A :class:`set` that can trigger callbacks for each element added
-    or removed.
-    """
-
-    def __init__(self, iterable=(), on_add=None, on_remove=None):
-        self._on_add = on_add
-        self._on_remove = on_remove
-        elements = set(iterable)
-        set.__init__(self, elements)
-        if callable(self._on_add):
-            self._on_add(*elements)
-
-    def __ior__(self, other):
-        elements = other - self
-        set.__ior__(self, other)
-        if callable(self._on_add):
-            self._on_add(*elements)
-        return self
-
-    def __iand__(self, other):
-        elements = self ^ other
-        set.__iand__(self, other)
-        if callable(self._on_remove):
-            self._on_remove(*elements)
-        return self
-
-    def __isub__(self, other):
-        elements = self & other
-        set.__isub__(self, other)
-        if callable(self._on_remove):
-            self._on_remove(*elements)
-        return self
-
-    def __ixor__(self, other):
-        added = other - self
-        removed = self & other
-        set.__ixor__(self, other)
-        if callable(self._on_add):
-            self._on_add(*added)
-        if callable(self._on_remove):
-            self._on_remove(*removed)
-        return self
-
-    def add(self, element):
-        if element not in self:
-            set.add(self, element)
-            if callable(self._on_add):
-                self._on_add(element)
-
-    def remove(self, element):
-        set.remove(self, element)
-        if callable(self._on_remove):
-            self._on_remove(element)
-
-    def discard(self, element):
-        if element in self:
-            set.discard(self, element)
-            if callable(self._on_remove):
-                self._on_remove(element)
-
-    def pop(self):
-        element = set.pop(self)
-        if callable(self._on_remove):
-            self._on_remove(element)
-        return element
-
-    def clear(self):
-        elements = set(self)
-        set.clear(self)
-        if callable(self._on_remove):
-            self._on_remove(*elements)
 
 
 def enumerate_nodes(iterable):

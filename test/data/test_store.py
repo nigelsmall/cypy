@@ -19,7 +19,8 @@
 from unittest import TestCase
 
 import cypy
-from cypy.data import ReactiveSet, FrozenGraphStore, MutableGraphStore
+from cypy.collections import ReactiveSet
+from cypy.data.store import FrozenGraphStore, MutableGraphStore
 
 _n = 65
 

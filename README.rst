@@ -72,10 +72,6 @@ MutableGraphStore
 -----------------
 TODO
 
-ReactiveSet
------------
-TODO
-
 
 ``cypy.data.subgraph``
 ======================
@@ -178,5 +174,14 @@ TODO
 TODO
 
 CypherLexer
+-----------
+TODO
+
+
+``cypy.collections``
+====================
+TODO
+
+ReactiveSet
 -----------
 TODO
