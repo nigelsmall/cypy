@@ -78,6 +78,17 @@
     ]
   },
   {
+    "code": "RETURN abs(-1)",
+    "tokens": [
+      "Keyword",
+      "Function",
+      "Punctuation",
+      "Operator",
+      "Integer",
+      "Punctuation"
+    ]
+  },
+  {
     "code": "!",
     "tokens": [
       "Error"
