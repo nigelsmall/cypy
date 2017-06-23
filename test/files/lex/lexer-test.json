@@ -1,0 +1,86 @@
+[
+  {
+    "code": "RETURN x",
+    "tokens": [
+      "Keyword",
+      "Variable"
+    ]
+  },
+  {
+    "code": "RETURN $x",
+    "tokens": [
+      "Keyword",
+      "Punctuation",
+      "Global"
+    ]
+  },
+  {
+    "code": "RETURN 1",
+    "tokens": [
+      "Keyword",
+      "Integer"
+    ]
+  },
+  {
+    "code": "RETURN -1",
+    "tokens": [
+      "Keyword",
+      "Operator",
+      "Integer"
+    ]
+  },
+  {
+    "code": "RETURN 3.14",
+    "tokens": [
+      "Keyword",
+      "Float"
+    ]
+  },
+  {
+    "code": "RETURN null",
+    "tokens": [
+      "Keyword",
+      "Constant"
+    ]
+  },
+  {
+    "code": "RETURN true, false",
+    "tokens": [
+      "Keyword",
+      "Constant",
+      "Punctuation",
+      "Constant"
+    ]
+  },
+  {
+    "code": "RETURN ((true OR false) AND ((NOT true XOR null) IS NULL)) IS NOT NULL;",
+    "tokens": [
+      "Keyword",
+      "Punctuation",
+      "Punctuation",
+      "Constant",
+      "Operator",
+      "Constant",
+      "Punctuation",
+      "Operator",
+      "Punctuation",
+      "Punctuation",
+      "Operator",
+      "Constant",
+      "Operator",
+      "Constant",
+      "Punctuation",
+      "Operator",
+      "Punctuation",
+      "Punctuation",
+      "Operator",
+      "Punctuation"
+    ]
+  },
+  {
+    "code": "!",
+    "tokens": [
+      "Error"
+    ]
+  }
+]

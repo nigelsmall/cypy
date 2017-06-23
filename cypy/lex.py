@@ -21,11 +21,116 @@ Pygments lexer for Cypher.
 
 import re
 
-from pygments.lexer import RegexLexer, include, words, bygroups
+from pygments.lexer import RegexLexer, include, bygroups
 from pygments.token import Keyword, Punctuation, Comment, Operator, Name, \
     String, Number, Whitespace
 
-__all__ = ['CypherLexer']
+
+__all__ = ["cypher_keywords", "CypherLexer"]
+
+
+cypher_keywords = [
+    "AS",
+    "ASC",
+    "ASCENDING",
+    "ASSERT",
+    "CALL",
+    "CREATE",
+    "CREATE CONSTRAINT ON",
+    "CREATE INDEX ON",
+    "CREATE UNIQUE",
+    "DELETE",
+    "DESC",
+    "DESCENDING",
+    "DETACH DELETE",
+    "DROP CONSTRAINT ON",
+    "DROP INDEX ON",
+    "EXPLAIN",
+    "FIELDTERMINATOR",
+    "FOREACH",
+    "FROM",
+    "LIMIT",
+    "LOAD CSV",
+    "MATCH",
+    "MERGE",
+    "ON CREATE SET",
+    "ON MATCH SET",
+    "OPTIONAL MATCH",
+    "ORDER BY",
+    "PROFILE",
+    "REMOVE",
+    "RETURN",
+    "RETURN DISTINCT",
+    "SET",
+    "SKIP",
+    "START",
+    "UNION",
+    "UNION ALL",
+    "UNWIND",
+    "USING INDEX",
+    "USING JOIN ON",
+    "USING PERIODIC COMMIT",
+    "USING SCAN",
+    "WHERE",
+    "WITH",
+    "WITH DISTINCT",
+    "WITH HEADERS",
+    "YIELD",
+]
+cypher_pseudo_keywords = [
+    "BEGIN"
+    "COMMIT",
+    "ROLLBACK",
+]
+cypher_operator_symbols = [
+    "!=",
+    "%",
+    "*",
+    "+",
+    "+=",
+    "-",
+    ".",
+    "/",
+    "<",
+    "<=",
+    "<>",
+    "=",
+    "=~",
+    ">",
+    ">=",
+    "^",
+]
+cypher_operator_words = [
+    'AND',
+    'CASE',
+    'CONTAINS',
+    'DISTINCT',
+    'ELSE',
+    'END',
+    'ENDS WITH',
+    'IN',
+    'IS NOT NULL',
+    'IS NULL',
+    'NOT',
+    'OR',
+    'STARTS WITH',
+    'THEN',
+    'WHEN',
+    'XOR',
+]
+cypher_constants = [
+    'null',
+    'true',
+    'false',
+]
+
+
+def word_list(words, token_type):
+    return list(reversed(sorted((word.replace(" ", r"\s+") + r"\b", token_type) for word in words)))
+
+
+def symbol_list(symbols, token_type):
+    return list(reversed(sorted(("".join("\\" + ch for ch in symbol), token_type) for symbol in symbols)))
 
 
 class CypherLexer(RegexLexer):
@@ -47,6 +152,7 @@ class CypherLexer(RegexLexer):
             include('strings'),
             include('comments'),
             include('keywords'),
+            include('pseudo-keywords'),
             (r'[,;]', Punctuation),
             include('labels'),
             include('operators'),
@@ -117,94 +223,23 @@ class CypherLexer(RegexLexer):
             (r'"(?:\\[bfnrt\'"\\]|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8}|[^\\"])*"', String),
         ],
 
-        'keywords': [
-            (r'CREATE\s+UNIQUE\b', Keyword),
-            (r'CREATE\s+CONSTRAINT\s+ON\b', Keyword),
-            (r'CREATE\s+INDEX\s+ON\b', Keyword),
-            (r'DETACH\s+DELETE\b', Keyword),
-            (r'DROP\s+CONSTRAINT\s+ON\b', Keyword),
-            (r'DROP\s+INDEX\s+ON\b', Keyword),
-            (r'LOAD\s+CSV\b', Keyword),
-            (r'OPTIONAL\s+MATCH\b', Keyword),
-            (r'ON\s+CREATE\s+SET\b', Keyword),
-            (r'ON\s+MATCH\s+SET\b', Keyword),
-            (r'ORDER\s+BY\b', Keyword),
-            (r'RETURN\s+DISTINCT\b', Keyword),
-            (r'UNION\s+ALL\b', Keyword),
-            (r'USING\s+INDEX\b', Keyword),
-            (r'USING\s+JOIN\s+ON\b', Keyword),
-            (r'USING\s+PERIODIC\s+COMMIT\b', Keyword),
-            (r'USING\s+SCAN\b', Keyword),
-            (r'WITH\s+DISTINCT\b', Keyword),
-            (r'WITH\s+HEADERS\b', Keyword),
-            (words((
-                'ASC',
-                'ASCENDING',
-                'ASSERT',
-                'CREATE',
-                'DELETE',
-                'DESC',
-                'DESCENDING',
-                'EXPLAIN',
-                'FIELDTERMINATOR',
-                'FOREACH',
-                'FROM',
-                'LIMIT',
-                'MATCH',
-                'MERGE',
-                'PROFILE',
-                'REMOVE',
-                'RETURN',
-                'SET',
-                'SKIP',
-                'START',
-                'UNION',
-                'UNWIND',
-                'WHERE',
-                'WITH',
-                'YIELD',
-            ), suffix=r'\b'), Keyword),
-            (words((
-                'BEGIN',
-                'COMMIT',
-                'ROLLBACK',
-            ), suffix=r'\b'), Keyword.Pseudo),
-        ],
+        'keywords': word_list(cypher_keywords, Keyword),
+        'pseudo-keywords': word_list(cypher_pseudo_keywords, Keyword),
 
         'labels': [
             (r'(:)(\s*)(`(?:``|[^`])+`)', bygroups(Punctuation, Whitespace, Name.Label)),
             (r'(:)(\s*)([A-Za-z_][0-9A-Za-z_]*)', bygroups(Punctuation, Whitespace, Name.Label)),
         ],
 
-        'operators': [
-            (r'ENDS\s+WITH\b', Operator),
-            (r'IS\s+NOT\s+NULL\b', Operator),
-            (r'IS\s+NULL\b', Operator),
-            (r'STARTS\s+WITH\b', Operator),
-            (words((
-                'AND',
-                'CASE',
-                'CONTAINS',
-                'DISTINCT',
-                'ELSE',
-                'END',
-                'IN',
-                'NOT',
-                'OR',
-                'THEN',
-                'WHEN',
-                'XOR',
-            ), suffix=r'\b'), Operator),
-            (r'\+=', Operator),
-            (r'=~', Operator),
-            (r'=|<>|!=|<|>|<=|>=', Operator),
-            (r'[\+\-\*/%^\.]', Operator),
-        ],
+        'operators': (word_list(cypher_operator_words, Operator) +
+                      symbol_list(cypher_operator_symbols, Operator)),
 
         'expressions': [
             include('callables'),
-            include('identifiers'),
             include('constants'),
+            include('aliases'),
+            include('variables'),
+            include('parameters'),
             include('numbers'),
         ],
         'callables': [
@@ -213,26 +248,22 @@ class CypherLexer(RegexLexer):
             # functions
             (r'([A-Za-z_][0-9A-Za-z_\.]*)(\s*)(\()', bygroups(Name.Function, Whitespace, Punctuation), "in-()"),
         ],
-        'identifiers': [
-            # aliases
+        'aliases': [
             (r'(AS)(\s+)(`(?:``|[^`])+`)', bygroups(Keyword, Whitespace, Name.Variable)),
             (r'(AS)(\s+)([A-Za-z_][0-9A-Za-z_]*)', bygroups(Keyword, Whitespace, Name.Variable)),
-            # variables
+        ],
+        'variables': [
             (r'`(?:``|[^`])+`', Name.Variable),
             (r'[A-Za-z_][0-9A-Za-z_]*', Name.Variable),
-            # parameters
+        ],
+        'parameters': [
             (r'(\$)(`(?:``|[^`])+`)', bygroups(Punctuation, Name.Variable.Global)),
             (r'(\$)([A-Za-z_][0-9A-Za-z_]*)', bygroups(Punctuation, Name.Variable.Global)),
         ],
-        'constants': [
-            (words((
-                'null',
-                'true',
-                'false'
-            ), suffix=r'\b'), Name.Constant),
-        ],
+        'constants': word_list(cypher_constants, Name.Constant),
         'numbers': [
-            (r'([0-9]*\.[0-9]*|[0-9]+)(e[+-]?[0-9]+)?', Number.Float),
+            (r'[0-9]*\.[0-9]*(e[+-]?[0-9]+)?', Number.Float),
+            (r'[0-9]+e[+-]?[0-9]+', Number.Float),
             (r'[0-9]+', Number.Integer),
         ],
 
