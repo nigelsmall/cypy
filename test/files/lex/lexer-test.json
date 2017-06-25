@@ -89,6 +89,23 @@
     ]
   },
   {
+    "code": "RETURN ';'; /* ; */; RETURN ';' + ';';",
+    "tokens": [
+      "Keyword",
+      "String",
+      "Punctuation",
+      "Multiline",
+      "Multiline",
+      "Multiline",
+      "Punctuation",
+      "Keyword",
+      "String",
+      "Operator",
+      "String",
+      "Punctuation"
+    ]
+  },
+  {
     "code": "!",
     "tokens": [
       "Error"

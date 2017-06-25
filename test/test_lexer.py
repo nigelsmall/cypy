@@ -62,3 +62,24 @@ class LexerTestCase(TestCase):
             expected_tokens = [(Name.Variable, "x"), (Operator, op), (Name.Variable, "y")]
             actual_tokens = [t for t in pygments.lex("x{}y".format(op), self.lexer) if t[0] is not Whitespace]
             self.assertEqual(expected_tokens, actual_tokens, msg="Token mismatch when parsing {!r}".format(op))
+
+
+class LexerStatementSplittingTestCase(TestCase):
+
+    lexer = CypherLexer()
+
+    def test_can_get_single_statement(self):
+        statements = list(self.lexer.get_statements("RETURN 1"))
+        self.assertEqual(statements, ["RETURN 1"])
+
+    def test_can_get_multiple_statements(self):
+        statements = list(self.lexer.get_statements("RETURN 1; RETURN 2; RETURN 3"))
+        self.assertEqual(statements, ["RETURN 1", "RETURN 2", "RETURN 3"])
+
+    def test_whitespace_is_ignored(self):
+        statements = list(self.lexer.get_statements("   RETURN 1\t;\tRETURN 2;\r\n     RETURN 3 "))
+        self.assertEqual(statements, ["RETURN 1", "RETURN 2", "RETURN 3"])
+
+    def test_empty_statements_are_ignored(self):
+        statements = list(self.lexer.get_statements("RETURN 1; RETURN 2;; RETURN 3;;;"))
+        self.assertEqual(statements, ["RETURN 1", "RETURN 2", "RETURN 3"])

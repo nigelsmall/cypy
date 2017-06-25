@@ -246,7 +246,7 @@ class CypherLexer(RegexLexer):
             include('strings'),
             include('comments'),
             include('keywords'),        # keywords used in FOREACH
-            (r'[,;|]', Punctuation),
+            (r'[,|]', Punctuation),
             include('labels'),
             include('operators'),
             include('expressions'),
@@ -262,7 +262,7 @@ class CypherLexer(RegexLexer):
             include('strings'),
             include('comments'),
             (r'WHERE\b', Keyword),      # used in list comprehensions
-            (r'[,;|]', Punctuation),
+            (r'[,|]', Punctuation),
             include('labels'),
             include('operators'),
             include('expressions'),
@@ -276,7 +276,7 @@ class CypherLexer(RegexLexer):
         'in-{}': [
             include('strings'),
             include('comments'),
-            (r'[,:;]', Punctuation),
+            (r'[,:]', Punctuation),
             include('operators'),
             include('expressions'),
             include('whitespace'),
@@ -353,3 +353,19 @@ class CypherLexer(RegexLexer):
         ],
 
     }
+
+    def get_statements(self, text):
+        """ Split the text into statements delimited by semicolons and
+        yield each statement in turn. Yielded statements are stripped
+        of both leading and trailing whitespace.
+        """
+        fragments = []
+        for index, token_type, value in self.get_tokens_unprocessed(text):
+            if token_type == Punctuation and value == ";":
+                if fragments:
+                    yield "".join(fragments).strip()
+                    fragments[:] = ()
+            else:
+                fragments.append(value)
+        if fragments:
+            yield "".join(fragments).strip()
