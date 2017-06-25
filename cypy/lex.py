@@ -78,7 +78,7 @@ cypher_keywords = [
     "YIELD",
 ]
 cypher_pseudo_keywords = [
-    "BEGIN"
+    "BEGIN",
     "COMMIT",
     "ROLLBACK",
 ]
