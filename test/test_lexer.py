@@ -81,5 +81,5 @@ class LexerStatementSplittingTestCase(TestCase):
         self.assertEqual(statements, ["RETURN 1", "RETURN 2", "RETURN 3"])
 
     def test_empty_statements_are_ignored(self):
-        statements = list(self.lexer.get_statements("RETURN 1; RETURN 2;; RETURN 3;;;"))
+        statements = list(self.lexer.get_statements("RETURN 1; RETURN 2;; RETURN 3; ; ;"))
         self.assertEqual(statements, ["RETURN 1", "RETURN 2", "RETURN 3"])

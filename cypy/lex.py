@@ -357,15 +357,18 @@ class CypherLexer(RegexLexer):
     def get_statements(self, text):
         """ Split the text into statements delimited by semicolons and
         yield each statement in turn. Yielded statements are stripped
-        of both leading and trailing whitespace.
+        of both leading and trailing whitespace. Empty statements are
+        skipped.
         """
         fragments = []
         for index, token_type, value in self.get_tokens_unprocessed(text):
             if token_type == Punctuation and value == ";":
-                if fragments:
-                    yield "".join(fragments).strip()
-                    fragments[:] = ()
+                statement = "".join(fragments).strip()
+                fragments[:] = ()
+                if statement:
+                    yield statement
             else:
                 fragments.append(value)
-        if fragments:
-            yield "".join(fragments).strip()
+        statement = "".join(fragments).strip()
+        if statement:
+            yield statement
