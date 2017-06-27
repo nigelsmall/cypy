@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data.subgraph import Node
+from cypy.data import Node
 from cypy.encoding import cypher_repr
 
 

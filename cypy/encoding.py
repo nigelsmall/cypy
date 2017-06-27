@@ -14,8 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+from collections import OrderedDict
 from re import compile as re_compile
 from sys import version_info
 from unicodedata import category
@@ -49,6 +48,88 @@ ESCAPED_SINGLE_QUOTE = u"\\'"
 X_ESCAPE = re_compile(r"(\\x([0-9a-f]{2}))")
 DOUBLE_QUOTED_SAFE = re_compile(r"([ -!#-\[\]-~]+)")
 SINGLE_QUOTED_SAFE = re_compile(r"([ -&(-\[\]-~]+)")
+
+
+class LabelSetView(object):
+
+    def __init__(self, elements=(), selected=(), **kwargs):
+        self.__elements = frozenset(elements)
+        self.__selected = tuple(selected)
+        self.__kwargs = kwargs
+
+    def __repr__(self):
+        if self.__selected:
+            return "".join(":%s" % cypher_escape(e, **self.__kwargs) for e in self.__selected if e in self.__elements)
+        else:
+            return "".join(":%s" % cypher_escape(e, **self.__kwargs) for e in sorted(self.__elements))
+
+    def __getattr__(self, element):
+        if element in self.__selected:
+            return self.__class__(self.__elements, self.__selected)
+        else:
+            return self.__class__(self.__elements, self.__selected + (element,))
+
+    def __len__(self):
+        return len(self.__elements)
+
+    def __iter__(self):
+        return iter(self.__elements)
+
+    def __contains__(self, element):
+        return element in self.__elements
+
+    def __and__(self, other):
+        return self.__elements & set(other)
+
+    def __or__(self, other):
+        return self.__elements | set(other)
+
+    def __sub__(self, other):
+        return self.__elements - set(other)
+
+    def __xor__(self, other):
+        return self.__elements ^ set(other)
+
+
+class PropertyDictView(object):
+
+    def __init__(self, items=(), selected=(), **kwargs):
+        self.__items = dict(items)
+        self.__selected = tuple(selected)
+        self.__kwargs = kwargs
+
+    def __repr__(self):
+        if self.__selected:
+            properties = OrderedDict((key, self.__items[key]) for key in self.__selected if key in self.__items)
+        else:
+            properties = OrderedDict((key, self.__items[key]) for key in sorted(self.__items))
+        return cypher_repr(properties, **self.__kwargs)
+
+    def __getattr__(self, key):
+        if key in self.__selected:
+            return self.__class__(self.__items, self.__selected)
+        else:
+            return self.__class__(self.__items, self.__selected + (key,))
+
+    def __len__(self):
+        return len(self.__items)
+
+    def __iter__(self):
+        return iter(self.__items)
+
+    def __contains__(self, key):
+        return key in self.__items
+
+
+class PropertySelector(object):
+
+    def __init__(self, items=(), default_value=None, **kwargs):
+        self.__items = dict(items)
+        self.__default_value = default_value
+        self.__kwargs = kwargs
+
+    def __getattr__(self, key):
+        return cypher_str(self.__items.get(key, self.__default_value), **self.__kwargs)
 
 
 class CypherEncoder(object):
@@ -189,8 +270,6 @@ class CypherEncoder(object):
         return u"".join(encoded)
 
     def _encode_node(self, node, template):
-        from cypy.data.labels import LabelSetView
-        from cypy.data.properties import PropertyDictView, PropertySelector
         return u"(" + template.format(
             labels=LabelSetView(node.labels(), encoding=self.encoding, quote=self.quote),
             properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
@@ -198,7 +277,6 @@ class CypherEncoder(object):
         ).strip() + u")"
 
     def _encode_relationship_detail(self, relationship, template):
-        from cypy.data.properties import PropertyDictView, PropertySelector
         return u"[" + template.format(
             type=u":" + relationship.type(),
             properties=PropertyDictView(relationship, encoding=self.encoding, quote=self.quote),

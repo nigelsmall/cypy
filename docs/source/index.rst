@@ -18,13 +18,9 @@ Contents
 
    casing
    collections
+   data
    data.abc
-   data.graph
-   data.labels
-   data.properties
    data.store
-   data.subgraph
-   data.values
    encoding
    lex
 

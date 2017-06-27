@@ -18,8 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data.graph import Graph
-from cypy.data.subgraph import Node, Relationship, Subgraph
+from cypy.data import Subgraph, Node, Relationship, Graph
 
 
 class GraphTestCase(TestCase):
