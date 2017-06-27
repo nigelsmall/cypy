@@ -75,3 +75,20 @@ class GraphRelationship(GraphStructure, Mapping):
         """ The sequence of nodes connected by this relationship.
         """
         return None, None
+
+
+class GraphPath(GraphStructure):
+    """ Abstract base class for a path from a graph.
+    """
+
+    @abstractmethod
+    def nodes(self):
+        """ The sequence of nodes connected by this path.
+        """
+        return None,
+
+    @abstractmethod
+    def relationships(self):
+        """ The sequence of relationships connected by this path.
+        """
+        return ()

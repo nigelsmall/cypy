@@ -22,7 +22,7 @@ Classes for modelling immutable segments of graph data.
 
 from itertools import chain
 
-from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship
+from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship, GraphPath
 from cypy.data.store import FrozenGraphStore, MutableGraphStore
 
 
@@ -306,7 +306,7 @@ class Relationship(GraphRelationship):
         return self._store.relationship_properties(self._uuid).items()
 
 
-class Path(GraphStructure):
+class Path(GraphPath):
 
     def __graph_store__(self):
         return self._store
