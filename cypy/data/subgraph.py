@@ -304,3 +304,55 @@ class Relationship(GraphRelationship):
 
     def items(self):
         return self._store.relationship_properties(self._uuid).items()
+
+
+class Path(GraphStructure):
+
+    def __graph_store__(self):
+        return self._store
+
+    @classmethod
+    def _append(cls, entities, *tail):
+        for walkable in tail:
+            next_entity = list(cls._walk(walkable))
+            if entities[-1] == next_entity[0]:
+                entities.extend(next_entity[1:])
+            elif entities[-1] == next_entity[-1]:
+                entities.extend(reversed(next_entity[:-1]))
+            else:
+                raise ValueError("Cannot concatenate {!r} to {!r}".format(next_entity, entities[-1]))
+
+    @classmethod
+    def _walk(cls, entity):
+        if hasattr(entity, "nodes") and callable(entity.nodes):
+            nodes = entity.nodes()
+            return [nodes[0], entity] + list(nodes[1:])
+        else:
+            return [entity]
+
+    def __init__(self, head, *tail):
+        entities = self._walk(head)
+        try:
+            self._append(entities, *tail)
+        except ValueError:
+            entities = list(reversed(self._walk(head)))
+            self._append(entities, *tail)
+        self._nodes = entities[0::2]
+        self._relationships = entities[1::2]
+        self._store = Subgraph.union(*entities).__graph_store__()
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, ", ".join(
+            chain((repr(self._nodes[0]),), map(repr, self._relationships))))
+
+    def order(self):
+        return len(self._nodes)
+
+    def size(self):
+        return len(self._relationships)
+
+    def nodes(self):
+        return tuple(self._nodes)
+
+    def relationships(self):
+        return tuple(self._relationships)

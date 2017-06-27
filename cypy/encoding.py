@@ -99,7 +99,6 @@ class CypherEncoder(object):
             return u"`" + key.replace(u"`", u"``") + u"`"
 
     def encode_value(self, value):
-        from cypy.data.abc import GraphNode, GraphRelationship
         if value is None:
             return NULL
         if value is True:
@@ -110,13 +109,13 @@ class CypherEncoder(object):
             return unicode(value)
         if isinstance(value, string):
             return self.encode_string(value)
-        if isinstance(value, GraphNode):
+        if hasattr(value, "nodes"):
+            if hasattr(value, "relationships"):
+                return self.encode_path(value)
+            else:
+                return self.encode_relationship(value)
+        if hasattr(value, "labels"):
             return self.encode_node(value)
-        if isinstance(value, GraphRelationship):
-            return self.encode_relationship(value)
-        # TODO
-        # if isinstance(value, Path):
-        #     return self.encode_path(value)
         if isinstance(value, list):
             return self.encode_list(value)
         if isinstance(value, dict):
@@ -163,27 +162,29 @@ class CypherEncoder(object):
         return self._encode_node(node, self.node_template)
 
     def encode_relationship(self, relationship):
+        nodes = relationship.nodes()
         return u"{}-{}->{}".format(
-            self._encode_node(relationship.start_node(), self.related_node_template),
+            self._encode_node(nodes[0], self.related_node_template),
             self._encode_relationship_detail(relationship, self.relationship_template),
-            self._encode_node(relationship.end_node(), self.related_node_template),
+            self._encode_node(nodes[-1], self.related_node_template),
         )
 
     def encode_path(self, path):
-        last_node = path.start_node()
+        last_node = path.nodes()[0]
         encoded = [self._encode_node(last_node, self.related_node_template)]
         append = encoded.append
         for relationship in path.relationships():
-            if relationship.start_node() == last_node:
+            related_nodes = relationship.nodes()
+            if related_nodes[0] == last_node:
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"->")
-                last_node = relationship.end_node()
+                last_node = related_nodes[-1]
             else:
                 append(u"<-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"-")
-                last_node = relationship.start_node()
+                last_node = related_nodes[0]
             append(self._encode_node(last_node, self.related_node_template))
         return u"".join(encoded)
 
