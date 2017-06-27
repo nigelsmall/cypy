@@ -16,6 +16,7 @@
 # limitations under the License.
 
 
+from collections import OrderedDict
 from functools import reduce
 from operator import xor as xor_operator
 
@@ -155,9 +156,9 @@ class PropertyDictView(object):
 
     def __repr__(self):
         if self.__selected:
-            properties = {key: self.__items[key] for key in self.__selected if key in self.__items}
+            properties = OrderedDict((key, self.__items[key]) for key in self.__selected if key in self.__items)
         else:
-            properties = {key: self.__items[key] for key in sorted(self.__items)}
+            properties = OrderedDict((key, self.__items[key]) for key in sorted(self.__items))
         return cypher_repr(properties, **self.__kwargs)
 
     def __getattr__(self, key):
