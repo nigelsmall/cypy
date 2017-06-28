@@ -18,7 +18,8 @@
 
 from __future__ import absolute_import
 
-from abc import abstractmethod
+from abc import abstractproperty
+
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -33,6 +34,12 @@ class GraphStructure(object):
     """
 
     def __graph_store__(self):
+        raise NotImplementedError()
+
+    def __graph_order__(self):
+        raise NotImplementedError()
+
+    def __graph_size__(self):
         raise NotImplementedError()
 
     def __eq__(self, other):
@@ -53,7 +60,7 @@ class GraphNode(GraphStructure, Mapping):
     """ Abstract base class for a node within a graph.
     """
 
-    @abstractmethod
+    @abstractproperty
     def labels(self):
         """ The set of all labels on this node.
         """
@@ -64,13 +71,13 @@ class GraphRelationship(GraphStructure, Mapping):
     """ Abstract base class for a relationship within a graph.
     """
 
-    @abstractmethod
+    @abstractproperty
     def type(self):
         """ The type of this relationship.
         """
         return None
 
-    @abstractmethod
+    @abstractproperty
     def nodes(self):
         """ The sequence of nodes connected by this relationship.
         """
@@ -81,13 +88,13 @@ class GraphPath(GraphStructure):
     """ Abstract base class for a path from a graph.
     """
 
-    @abstractmethod
+    @abstractproperty
     def nodes(self):
         """ The sequence of nodes connected by this path.
         """
         return None,
 
-    @abstractmethod
+    @abstractproperty
     def relationships(self):
         """ The sequence of relationships connected by this path.
         """

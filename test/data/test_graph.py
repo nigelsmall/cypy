@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data import Subgraph, Node, Relationship, Graph
+from cypy.data import Subgraph, Node, Relationship, Graph, order, size
 
 
 class GraphTestCase(TestCase):
@@ -26,20 +26,20 @@ class GraphTestCase(TestCase):
     def test_should_be_able_to_create_empty_graph(self):
         g = Graph()
         dumped = Subgraph(g)
-        assert dumped.order() == 0
-        assert dumped.size() == 0
-        assert set(dumped.nodes()) == set()
-        assert set(dumped.relationships()) == set()
+        assert order(dumped) == 0
+        assert size(dumped) == 0
+        assert set(dumped.nodes) == set()
+        assert set(dumped.relationships) == set()
 
     def test_should_be_able_to_add_node_to_graph(self):
         a = Node(name="Alice")
         g = Graph()
         g.load(a)
         dumped = Subgraph(g)
-        assert dumped.order() == 1
-        assert dumped.size() == 0
-        assert set(dumped.nodes()) == {a}
-        assert set(dumped.relationships()) == set()
+        assert order(dumped) == 1
+        assert size(dumped) == 0
+        assert set(dumped.nodes) == {a}
+        assert set(dumped.relationships) == set()
 
     def test_should_be_able_to_add_multiple_nodes_to_graph(self):
         a = Node(name="Alice")
@@ -48,10 +48,10 @@ class GraphTestCase(TestCase):
         g.load(a)
         g.load(b)
         dumped = Subgraph(g)
-        assert dumped.order() == 2
-        assert dumped.size() == 0
-        assert set(dumped.nodes()) == {a, b}
-        assert set(dumped.relationships()) == set()
+        assert order(dumped) == 2
+        assert size(dumped) == 0
+        assert set(dumped.nodes) == {a, b}
+        assert set(dumped.relationships) == set()
 
     def test_should_be_able_to_add_subgraph_to_graph(self):
         a = Node(name="Alice")
@@ -59,10 +59,10 @@ class GraphTestCase(TestCase):
         g = Graph()
         g.load(Subgraph.union(a, b))
         dumped = Subgraph(g)
-        assert dumped.order() == 2
-        assert dumped.size() == 0
-        assert set(dumped.nodes()) == {a, b}
-        assert set(dumped.relationships()) == set()
+        assert order(dumped) == 2
+        assert size(dumped) == 0
+        assert set(dumped.nodes) == {a, b}
+        assert set(dumped.relationships) == set()
 
     def test_should_be_able_to_add_relationships_to_graph(self):
         a = Node(name="Alice")
@@ -73,10 +73,10 @@ class GraphTestCase(TestCase):
         g = Graph()
         g.load(Subgraph.union(ab, bc))
         dumped = Subgraph(g)
-        assert dumped.order() == 3
-        assert dumped.size() == 2
-        assert set(dumped.nodes()) == {a, b, c}
-        assert set(dumped.relationships()) == {ab, bc}
+        assert order(dumped) == 3
+        assert size(dumped) == 2
+        assert set(dumped.nodes) == {a, b, c}
+        assert set(dumped.relationships) == {ab, bc}
 
     def test_node_selection(self):
         g = Graph()
@@ -136,5 +136,5 @@ class GraphCreateTestCase(TestCase):
     def test_can_create_empty_nodes(self):
         g = Graph()
         g.create()
-        assert g.order() == 1
-        assert g.size() == 0
+        assert order(g) == 1
+        assert size(g) == 0

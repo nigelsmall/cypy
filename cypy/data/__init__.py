@@ -42,6 +42,12 @@ class Subgraph(GraphStructure):
     def __graph_store__(self):
         return self._store
 
+    def __graph_order__(self):
+        return self._store.node_count()
+
+    def __graph_size__(self):
+        return self._store.relationship_count()
+
     def __init__(self, graph_structure=None):
         if graph_structure is None:
             self._store = FrozenGraphStore()
@@ -78,31 +84,30 @@ class Subgraph(GraphStructure):
     def __hash__(self):
         return hash(self.__graph_store__())
 
-    def order(self, *labels):
-        return self._store.node_count(*labels)
-
-    def size(self, type=None):
-        return self._store.relationship_count(r_type=type)
-
     def _node(self, uuid):
         store = self._store
         node = Node(*store.node_labels(uuid), **store.node_properties(uuid))
         node.uuid = uuid
         return node
 
-    def nodes(self, *labels):
-        store = self._store
-        for uuid in store.nodes(*labels):
-            yield self._node(uuid)
+    @property
+    def nodes(self):
+        """ The set of nodes in this subgraph.
+        """
+        return frozenset(self._node(uuid) for uuid in self._store.nodes())
 
-    def relationships(self, type=None, nodes=()):
-        store = self._store
-        for uuid in store.relationships(r_type=type, n_keys=nodes):
-            relationship = Relationship(store.relationship_type(uuid),
-                                        *map(self._node, store.relationship_nodes(uuid)),
-                                        **store.relationship_properties(uuid))
+    @property
+    def relationships(self):
+        """ The set of relationships in this subgraph.
+        """
+        r_set = set()
+        for uuid in self._store.relationships():
+            relationship = Relationship(self._store.relationship_type(uuid),
+                                        *map(self._node, self._store.relationship_nodes(uuid)),
+                                        **self._store.relationship_properties(uuid))
             relationship.uuid = uuid
-            yield relationship
+            r_set.add(relationship)
+        return frozenset(r_set)
 
 
 class Node(GraphNode):
@@ -112,17 +117,23 @@ class Node(GraphNode):
     def __graph_store__(self):
         return self._store
 
+    def __graph_order__(self):
+        return 1
+
+    def __graph_size__(self):
+        return 0
+
     def __init__(self, *labels, **properties):
         self._uuid = FrozenGraphStore.new_node_key()
         self._store = FrozenGraphStore.build({self._uuid: (labels, properties)})
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join(
-            chain(map(repr, self.labels()), ("{}={!r}".format(*item) for item in dict(self).items()))))
+            chain(map(repr, self.labels), ("{}={!r}".format(*item) for item in dict(self).items()))))
 
     def __str__(self):
         if self.labels():
-            return "(:{} {!r})".format(":".join(self.labels()), dict(self))
+            return "(:{} {!r})".format(":".join(self.labels), dict(self))
         else:
             return "({!r})".format(dict(self))
 
@@ -143,7 +154,7 @@ class Node(GraphNode):
 
     def __eq__(self, other):
         try:
-            return self.labels() == other.labels() and dict(self) == dict(other)
+            return set(self.labels) == set(other.labels) and dict(self) == dict(other)
         except AttributeError:
             return False
 
@@ -155,6 +166,8 @@ class Node(GraphNode):
 
     @property
     def uuid(self):
+        """ Unique identifier for this node.
+        """
         return self._uuid
 
     @uuid.setter
@@ -166,22 +179,25 @@ class Node(GraphNode):
         del store._nodes[old_value]
         store._build_nodes_by_label()
 
-    def order(self):
-        return 1
-
-    def size(self):
-        return 0
-
+    @property
     def labels(self):
+        """ The set of labels attached to this node.
+        """
         return self._store.node_labels(self._uuid)
 
     def keys(self):
+        """ Return the property keys for this node.
+        """
         return self._store.node_properties(self._uuid).keys()
 
     def values(self):
+        """ Return the property values for this node.
+        """
         return self._store.node_properties(self._uuid).values()
 
     def items(self):
+        """ Return the full set of properties for this node.
+        """
         return self._store.node_properties(self._uuid).items()
 
 
@@ -191,6 +207,12 @@ class Relationship(GraphRelationship):
 
     def __graph_store__(self):
         return self._store
+
+    def __graph_order__(self):
+        return len(set(self._nodes))
+
+    def __graph_size__(self):
+        return 1
 
     def __init__(self, *type_and_nodes, **properties):
         type_ = None
@@ -218,7 +240,7 @@ class Relationship(GraphRelationship):
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join(
-            chain([repr(self.type())], map(repr, self.nodes()), ("{}={!r}".format(*item) for item in dict(self).items()))))
+            chain([repr(self.type)], map(repr, self.nodes), ("{}={!r}".format(*item) for item in dict(self).items()))))
 
     def __str__(self):
         if bool(self):
@@ -243,8 +265,8 @@ class Relationship(GraphRelationship):
 
     def __eq__(self, other):
         try:
-            return (self.type() == other.type() and dict(self) == dict(other) and
-                    tuple(node.uuid for node in self.nodes()) == tuple(node.uuid for node in other.nodes()))
+            return (self.type == other.type and dict(self) == dict(other) and
+                    tuple(node.uuid for node in self.nodes) == tuple(node.uuid for node in other.nodes))
         except AttributeError:
             return False
 
@@ -256,6 +278,8 @@ class Relationship(GraphRelationship):
 
     @property
     def uuid(self):
+        """ Unique identifier for this node.
+        """
         return self._uuid
 
     @uuid.setter
@@ -268,38 +292,32 @@ class Relationship(GraphRelationship):
         store._build_relationships_by_node()
         store._build_relationships_by_type()
 
-    def order(self):
-        return len(self._nodes)
-
-    def size(self):
-        return 1
-
+    @property
     def type(self):
+        """ The type of this relationship.
+        """
         from cypy.casing import relationship_case
         return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
 
+    @property
     def nodes(self):
+        """ The nodes connected by this relationship.
+        """
         return self._nodes
 
-    def start_node(self):
-        try:
-            return self._nodes[0]
-        except IndexError:
-            return None
-
-    def end_node(self):
-        try:
-            return self._nodes[-1]
-        except IndexError:
-            return None
-
     def keys(self):
+        """ Return the property keys for this relationship.
+        """
         return self._store.relationship_properties(self._uuid).keys()
 
     def values(self):
+        """ Return the property values for this relationship.
+        """
         return self._store.relationship_properties(self._uuid).values()
 
     def items(self):
+        """ Return the full set of properties for this relationship.
+        """
         return self._store.relationship_properties(self._uuid).items()
 
 
@@ -309,6 +327,12 @@ class Path(GraphPath):
 
     def __graph_store__(self):
         return self._store
+
+    def __graph_order__(self):
+        return len(self._nodes)
+
+    def __graph_size__(self):
+        return len(self._relationships)
 
     @classmethod
     def _append(cls, entities, *tail):
@@ -323,9 +347,8 @@ class Path(GraphPath):
 
     @classmethod
     def _walk(cls, entity):
-        if hasattr(entity, "nodes") and callable(entity.nodes):
-            nodes = entity.nodes()
-            return [nodes[0], entity] + list(nodes[1:])
+        if hasattr(entity, "nodes"):
+            return [entity.nodes[0], entity] + list(entity.nodes[1:])
         else:
             return [entity]
 
@@ -344,16 +367,19 @@ class Path(GraphPath):
         return "{}({})".format(self.__class__.__name__, ", ".join(
             chain((repr(self._nodes[0]),), map(repr, self._relationships))))
 
-    def order(self):
-        return len(self._nodes)
-
-    def size(self):
+    def __len__(self):
         return len(self._relationships)
 
+    @property
     def nodes(self):
+        """ The nodes in this path.
+        """
         return tuple(self._nodes)
 
+    @property
     def relationships(self):
+        """ The relationships in this path.
+        """
         return tuple(self._relationships)
 
 
@@ -364,14 +390,14 @@ class Graph(GraphStructure):
     def __graph_store__(self):
         return self._store
 
+    def __graph_order__(self):
+        return self._store.node_count()
+
+    def __graph_size__(self):
+        return self._store.relationship_count()
+
     def __init__(self):
         self._store = MutableGraphStore()
-
-    def order(self, *labels):
-        return self._store.node_count(*labels)
-
-    def size(self):
-        return self._store.relationship_count()
 
     def dump(self):
         return Subgraph(self)
@@ -436,6 +462,12 @@ class NodeView(GraphNode):
 
     def __graph_store__(self):
         raise NotImplementedError()
+
+    def __graph_order__(self):
+        return 1
+
+    def __graph_size__(self):
+        return 0
 
     def __init__(self, store, key):
         self._store = store
@@ -545,6 +577,12 @@ class RelationshipView(GraphRelationship):
     def __graph_store__(self):
         raise NotImplementedError()
 
+    def __graph_order__(self):
+        return len(self.nodes)
+
+    def __graph_size__(self):
+        return 1
+
     def __init__(self, store, uuid):
         self._store = store
         self._uuid = uuid
@@ -587,3 +625,11 @@ class RelationshipView(GraphRelationship):
         """ Return the nodes connected by this relationship.
         """
         return tuple(self._store.relationship_nodes(self._uuid))
+
+
+def order(graph_structure):
+    return graph_structure.__graph_order__()
+
+
+def size(graph_structure):
+    return graph_structure.__graph_size__()

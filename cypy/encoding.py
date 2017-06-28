@@ -14,6 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+from __future__ import absolute_import
+
 from collections import OrderedDict
 from re import compile as re_compile
 from sys import version_info
@@ -243,42 +247,40 @@ class CypherEncoder(object):
         return self._encode_node(node, self.node_template)
 
     def encode_relationship(self, relationship):
-        nodes = relationship.nodes()
         return u"{}-{}->{}".format(
-            self._encode_node(nodes[0], self.related_node_template),
+            self._encode_node(relationship.nodes[0], self.related_node_template),
             self._encode_relationship_detail(relationship, self.relationship_template),
-            self._encode_node(nodes[-1], self.related_node_template),
+            self._encode_node(relationship.nodes[-1], self.related_node_template),
         )
 
     def encode_path(self, path):
-        last_node = path.nodes()[0]
+        last_node = path.nodes[0]
         encoded = [self._encode_node(last_node, self.related_node_template)]
         append = encoded.append
         for relationship in path.relationships():
-            related_nodes = relationship.nodes()
-            if related_nodes[0] == last_node:
+            if relationship.nodes[0] == last_node:
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"->")
-                last_node = related_nodes[-1]
+                last_node = relationship.nodes[-1]
             else:
                 append(u"<-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"-")
-                last_node = related_nodes[0]
+                last_node = relationship.nodes[0]
             append(self._encode_node(last_node, self.related_node_template))
         return u"".join(encoded)
 
     def _encode_node(self, node, template):
         return u"(" + template.format(
-            labels=LabelSetView(node.labels(), encoding=self.encoding, quote=self.quote),
+            labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
             properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(node, u""),
         ).strip() + u")"
 
     def _encode_relationship_detail(self, relationship, template):
         return u"[" + template.format(
-            type=u":" + relationship.type(),
+            type=u":" + relationship.type,
             properties=PropertyDictView(relationship, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(relationship, u""),
         ).strip() + u"]"

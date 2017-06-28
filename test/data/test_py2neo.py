@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data import Subgraph, Node, Relationship
+from cypy.data import Subgraph, Node, Relationship, order, size
 from cypy.data.store import PropertyDict
 
 
@@ -148,26 +148,24 @@ class SubgraphTestCase(TestCase):
                 carol_married_to_dave | dave_works_for_dave)
 
     def test_nodes(self):
-        nodes = self.subgraph.nodes()
-        assert set(nodes) == {alice, bob, carol, dave}
+        assert set(self.subgraph.nodes) == {alice, bob, carol, dave}
 
     def test_relationships(self):
-        relationships = self.subgraph.relationships()
-        assert set(relationships) == {alice_knows_bob, alice_likes_carol, carol_dislikes_bob,
-                                      carol_married_to_dave, dave_works_for_dave}
+        assert set(self.subgraph.relationships) == {alice_knows_bob, alice_likes_carol, carol_dislikes_bob,
+                                                    carol_married_to_dave, dave_works_for_dave}
 
     def test_order(self):
-        assert Subgraph(self.subgraph).order() == 4
+        assert order(self.subgraph) == 4
 
     def test_size(self):
-        assert Subgraph(self.subgraph).size() == 5
+        assert size(self.subgraph) == 5
 
     def test_can_infer_nodes_through_relationships(self):
         subgraph = Subgraph(alice_knows_bob)
-        assert Subgraph(subgraph).order() == 2
-        assert Subgraph(subgraph).size() == 1
-        assert set(subgraph.nodes()) == {alice, bob}
-        assert set(subgraph.relationships()) == {alice_knows_bob}
+        assert order(subgraph) == 2
+        assert size(subgraph) == 1
+        assert set(subgraph.nodes) == {alice, bob}
+        assert set(subgraph.relationships) == {alice_knows_bob}
 
     def test_equality(self):
         other_subgraph = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob |
@@ -296,10 +294,10 @@ class SubgraphTestCase(TestCase):
 class NodeTestCase(TestCase):
 
     def test_order(self):
-        assert Subgraph(alice).order() == 1
+        assert order(alice) == 1
 
     def test_size(self):
-        assert Subgraph(alice).size() == 0
+        assert size(alice) == 0
 
     def test_empty_node(self):
         n = Node()
@@ -311,13 +309,12 @@ class NodeTestCase(TestCase):
         assert alice.__bool__()
         assert alice.__nonzero__()
         assert len(alice) == 2
-        # assert list(walk(alice)) == [alice]
-        assert set(alice.labels()) == {"Person", "Employee"}
+        assert set(alice.labels) == {"Person", "Employee"}
         assert dict(alice) == {"name": "Alice", "age": 33}
         assert dict(alice)["name"] == "Alice"
         assert alice["name"] == "Alice"
-        assert Subgraph(alice).order() == 1
-        assert Subgraph(alice).size() == 0
+        assert order(alice) == 1
+        assert size(alice) == 0
 
     def test_equality(self):
         other_node = Node("Person", "Employee", name="Alice", age=33)
@@ -338,81 +335,65 @@ class NodeTestCase(TestCase):
 class RelationshipTestCase(TestCase):
 
     def test_nodes(self):
-        nodes = alice_knows_bob.nodes()
-        assert isinstance(nodes, tuple)
-        assert nodes == (alice, bob)
+        assert alice_knows_bob.nodes == (alice, bob)
 
     def test_order(self):
-        assert Subgraph(alice_knows_bob).order() == 2
+        assert order(alice_knows_bob) == 2
 
     def test_size(self):
-        assert Subgraph(alice_knows_bob).size() == 1
+        assert size(alice_knows_bob) == 1
 
     def test_relationship(self):
-        assert alice_knows_bob.start_node() == alice
-        assert alice_knows_bob.end_node() == bob
-        # assert list(walk(alice_knows_bob)) == [alice, alice_knows_bob, bob]
-        assert alice_knows_bob.type() == "KNOWS"
+        assert alice_knows_bob.nodes == (alice, bob)
+        assert alice_knows_bob.type == "KNOWS"
         assert dict(alice_knows_bob) == {"since": 1999}
         assert alice_knows_bob["since"] == 1999
-        assert Subgraph(alice_knows_bob).order() == 2
-        assert Subgraph(alice_knows_bob).size() == 1
-        assert set(alice_knows_bob.nodes()) == {alice, bob}
+        assert order(alice_knows_bob) == 2
+        assert size(alice_knows_bob) == 1
+        assert set(alice_knows_bob.nodes) == {alice, bob}
 
     def test_loop(self):
-        assert dave_works_for_dave.start_node() == dave
-        assert dave_works_for_dave.end_node() == dave
-        # assert list(walk(dave_works_for_dave)) == [dave, dave_works_for_dave, dave]
-        assert Subgraph(dave_works_for_dave).order() == 1
-        assert Subgraph(dave_works_for_dave).size() == 1
-        assert set(dave_works_for_dave.nodes()) == {dave}
+        assert dave_works_for_dave.nodes == (dave, dave)
+        assert order(dave_works_for_dave) == 1
+        assert size(dave_works_for_dave) == 1
+        assert set(dave_works_for_dave.nodes) == {dave}
 
     def test_construction_from_no_arguments(self):
         rel = Relationship()
-        assert rel.nodes() == ()
-        assert rel.start_node() is None
-        assert rel.end_node() is None
-        assert rel.type() == "RELATIONSHIP"
+        assert rel.nodes == ()
+        assert rel.type == "RELATIONSHIP"
 
     def test_construction_from_one_argument(self):
         rel = Relationship(alice)
-        assert rel.start_node() is alice
-        assert rel.end_node() is alice
-        assert rel.type() == "RELATIONSHIP"
+        assert rel.nodes == (alice,)
+        assert rel.type == "RELATIONSHIP"
 
     def test_construction_from_two_node_arguments(self):
         rel = Relationship(alice, bob)
-        assert rel.start_node() is alice
-        assert rel.end_node() is bob
-        assert rel.type() == "RELATIONSHIP"
+        assert rel.nodes == (alice, bob)
+        assert rel.type == "RELATIONSHIP"
 
     def test_construction_from_node_and_type_arguments(self):
         rel = Relationship(alice, "LIKES")
-        assert rel.start_node() is alice
-        assert rel.end_node() is alice
-        assert rel.type() == "LIKES"
+        assert rel.nodes == (alice,)
+        assert rel.type == "LIKES"
 
     def test_construction_from_three_arguments(self):
         rel = Relationship(alice, "KNOWS", bob)
-        assert rel.start_node() is alice
-        assert rel.end_node() is bob
-        assert rel.type() == "KNOWS"
+        assert rel.nodes == (alice, bob)
+        assert rel.type == "KNOWS"
 
     def test_construction_from_subclass(self):
         class WorksWith(Relationship):
             pass
         rel = WorksWith(alice, bob)
-        assert rel.start_node() is alice
-        assert rel.end_node() is bob
-        assert rel.type() == "WORKS_WITH"
+        assert rel.nodes == (alice, bob)
+        assert rel.type == "WORKS_WITH"
 
     def test_construction_from_more_arguments(self):
         rel = Relationship(alice, "KNOWS", bob, carol)
-        assert rel.nodes() == (alice, bob, carol)
-        assert rel.start_node() is alice
-        assert rel.end_node() is carol
-        assert rel.type() == "KNOWS"
-
+        assert rel.nodes == (alice, bob, carol)
+        assert rel.type == "KNOWS"
 
     def test_equality(self):
         other_rel = alice_knows_bob
@@ -431,18 +412,16 @@ class RelationshipLoopTestCase(TestCase):
     loop = Relationship(alice, "LIKES", alice)
 
     def test_type(self):
-        assert self.loop.type() == "LIKES"
+        assert self.loop.type == "LIKES"
 
     def test_nodes(self):
-        nodes = self.loop.nodes()
-        assert isinstance(nodes, tuple)
-        assert nodes == (alice, alice)
+        assert self.loop.nodes == (alice, alice)
 
     def test_order(self):
-        assert Subgraph(self.loop).order() == 1
+        assert order(self.loop) == 1
 
     def test_size(self):
-        assert Subgraph(self.loop).size() == 1
+        assert size(self.loop) == 1
 
 
 # class PathTestCase(TestCase):
@@ -646,9 +625,9 @@ class UnionTestCase(TestCase):
         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
         graph = graph_1 | graph_2
-        assert Subgraph(graph).order() == 4
-        assert Subgraph(graph).size() == 5
-        assert set(graph.nodes()) == {alice, bob, carol, dave}
+        assert order(Subgraph(graph)) == 4
+        assert size(Subgraph(graph)) == 5
+        assert set(graph.nodes) == {alice, bob, carol, dave}
 
 
 # class IntersectionTestCase(TestCase):
