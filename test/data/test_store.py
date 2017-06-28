@@ -194,6 +194,7 @@ class GraphStoreTestCase(TestCase):
     def test_should_get_node_degree(self):
         store = FrozenGraphStore(self.store)
         assert store.relationship_count(n_keys={self.a}) == 4
+        assert store.relationship_count(r_type="LIKES", n_keys={self.a}) == 2
         assert store.relationship_count(n_keys={self.b}) == 4
         assert store.relationship_count(n_keys={self.c}) == 3
         assert store.relationship_count(n_keys={self.d}) == 1
