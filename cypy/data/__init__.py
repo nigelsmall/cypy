@@ -18,6 +18,7 @@
 
 from collections import Sequence, Set
 from itertools import chain
+from re import compile as re_compile
 
 from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship, GraphPath
 from cypy.data.store import MutableGraphStore, FrozenGraphStore
@@ -296,8 +297,7 @@ class Relationship(GraphRelationship):
     def type(self):
         """ The type of this relationship.
         """
-        from cypy.casing import relationship_case
-        return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
+        return self._store.relationship_type(self._uuid) or _relationship_case(self.__class__.__name__)
 
     @property
     def nodes(self):
@@ -618,8 +618,7 @@ class RelationshipView(GraphRelationship):
         return self._uuid
 
     def type(self):
-        from cypy.casing import relationship_case
-        return self._store.relationship_type(self._uuid) or relationship_case(self.__class__.__name__)
+        return self._store.relationship_type(self._uuid) or _relationship_case(self.__class__.__name__)
 
     def nodes(self):
         """ Return the nodes connected by this relationship.
@@ -628,8 +627,19 @@ class RelationshipView(GraphRelationship):
 
 
 def order(graph_structure):
+    """ Count the number of nodes in a graph structure.
+    """
     return graph_structure.__graph_order__()
 
 
 def size(graph_structure):
+    """ Count the number of relationships in a graph structure.
+    """
     return graph_structure.__graph_size__()
+
+
+def _relationship_case(s):
+    word_first = re_compile(r"(.)([A-Z][a-z]+)")
+    word_all = re_compile(r"([a-z0-9])([A-Z])")
+    s1 = word_first.sub(r"\1_\2", s)
+    return word_all.sub(r"\1_\2", s1).upper()

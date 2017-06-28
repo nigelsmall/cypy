@@ -16,7 +16,6 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   casing
    collections
    data
    data.abc
