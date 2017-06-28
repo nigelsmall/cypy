@@ -425,18 +425,18 @@ class GraphStore(GraphStructure):
                 data.setdefault(n_key, set()).add((r_key, n_index))
         self._relationships_by_node = data
 
-    def node_count(self, *labels):
+    def node_count(self, *n_labels):
         """ Count and return the number of nodes in this store.
 
-        :param labels: count only nodes with all these labels
+        :param n_labels: count only nodes with all these labels
         :return: number of nodes
         """
-        if not labels:
+        if not n_labels:
             return len(self._nodes)
-        elif len(labels) == 1:
-            return len(self._nodes_by_label.get(labels[0], ()))
+        elif len(n_labels) == 1:
+            return len(self._nodes_by_label.get(n_labels[0], ()))
         else:
-            return sum(1 for _ in self.nodes(*labels))
+            return sum(1 for _ in self.nodes(*n_labels))
 
     def nodes(self, *n_labels):
         """ Return an iterator over the node keys in this store,
@@ -478,29 +478,18 @@ class GraphStore(GraphStructure):
         else:
             return node_entry.properties
 
-    # TODO: add endpoints
-    def relationship_count(self, r_type=None):
-        """ Count and return the number of relationships in this store.
+    def relationship_count(self, r_type=None, n_keys=()):
+        """ Count relationships filtered by type and endpoint.
         """
-        if r_type is None:
+        if r_type is None and not n_keys:
             return len(self._relationships)
-        else:
+        elif not n_keys:
             return len(self._relationships_by_type.get(r_type, ()))
-
-    # TODO: add type and endpoint
-    def degree(self, n_key):
-        """ Count and return the number of relationships attached to
-        the node identified by `node_key`.
-
-        :param n_key: node identifier
-        """
-        try:
-            return len(self._relationships_by_node[n_key])
-        except KeyError:
-            return 0
+        else:
+            return sum(1 for _ in self.relationships(r_type, n_keys))
 
     def relationships(self, r_type=None, n_keys=()):
-        """ Match relationships filtered by endpoint and type.
+        """ Match relationships filtered by type and endpoint.
 
         :param r_type:
         :param n_keys:
