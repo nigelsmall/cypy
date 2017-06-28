@@ -16,6 +16,11 @@
 # limitations under the License.
 
 
+"""
+General purpose graph data storage classes for both mutable and immutable data.
+"""
+
+
 from collections import Sequence, Set
 from itertools import chain
 from re import compile as re_compile
