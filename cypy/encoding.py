@@ -257,7 +257,7 @@ class CypherEncoder(object):
         last_node = path.nodes[0]
         encoded = [self._encode_node(last_node, self.related_node_template)]
         append = encoded.append
-        for relationship in path.relationships():
+        for relationship in path.relationships:
             if relationship.nodes[0] == last_node:
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
