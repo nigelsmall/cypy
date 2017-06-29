@@ -272,15 +272,19 @@ class CypherEncoder(object):
         return u"".join(encoded)
 
     def _encode_node(self, node, template):
-        return u"(" + template.format(
-            labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
-            properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
-            property=PropertySelector(node, u""),
-        ).strip() + u")"
+        try:
+            return u"(" + template.format(
+                labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
+                properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
+                property=PropertySelector(node, u""),
+            ).strip() + u")"
+        except (AttributeError, TypeError):
+            return u"({})".format(node)
 
     def _encode_relationship_detail(self, relationship, template):
+        from cypy.data import Relationship
         return u"[" + template.format(
-            type=u":" + relationship.type,
+            type=u":" + getattr(relationship, "type", Relationship.default_type(relationship)),
             properties=PropertyDictView(relationship, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(relationship, u""),
         ).strip() + u"]"

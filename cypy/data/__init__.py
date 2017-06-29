@@ -138,7 +138,7 @@ class Node(GraphNode):
             chain(map(repr, self.labels), ("{}={!r}".format(*item) for item in dict(self).items()))))
 
     def __str__(self):
-        if self.labels():
+        if self.labels:
             return "(:{} {!r})".format(":".join(self.labels), dict(self))
         else:
             return "({!r})".format(dict(self))
@@ -211,6 +211,13 @@ class Relationship(GraphRelationship):
     """ Immutable relationship object.
     """
 
+    @classmethod
+    def default_type(cls, relationship):
+        word_first = re_compile(r"(.)([A-Z][a-z]+)")
+        word_all = re_compile(r"([a-z0-9])([A-Z])")
+        s1 = word_first.sub(r"\1_\2", relationship.__class__.__name__)
+        return word_all.sub(r"\1_\2", s1).upper()
+
     def __graph_store__(self):
         return self._store
 
@@ -250,9 +257,9 @@ class Relationship(GraphRelationship):
 
     def __str__(self):
         if bool(self):
-            return "()-[:{} {}]->()".format(self.type(), dict(self))
+            return "()-[:{} {}]->()".format(self.type, dict(self))
         else:
-            return "()-[:{}]->()".format(self.type())
+            return "()-[:{}]->()".format(self.type)
 
     def __bool__(self):
         return bool(self._store.relationship_properties(self._uuid))
@@ -302,7 +309,7 @@ class Relationship(GraphRelationship):
     def type(self):
         """ The type of this relationship.
         """
-        return self._store.relationship_type(self._uuid) or _relationship_case(self.__class__.__name__)
+        return self._store.relationship_type(self._uuid) or Relationship.default_type(self)
 
     @property
     def nodes(self):
@@ -485,7 +492,7 @@ class NodeView(GraphNode):
 
     def __str__(self):
         return "(#{}{} {!r})".format(self.uuid.hex[-7:], "".join(
-            ":{}".format(label) for label in self.labels()), dict(self._store.node_properties(self._uuid)))
+            ":{}".format(label) for label in self.labels), dict(self._store.node_properties(self._uuid)))
 
     def __getitem__(self, key):
         properties = self._store.node_properties(self._uuid)
@@ -623,7 +630,7 @@ class RelationshipView(GraphRelationship):
         return self._uuid
 
     def type(self):
-        return self._store.relationship_type(self._uuid) or _relationship_case(self.__class__.__name__)
+        return self._store.relationship_type(self._uuid) or Relationship.default_type(self)
 
     def nodes(self):
         """ Return the nodes connected by this relationship.
