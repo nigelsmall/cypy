@@ -254,21 +254,19 @@ class CypherEncoder(object):
         )
 
     def encode_path(self, path):
-        last_node = path.nodes[0]
-        encoded = [self._encode_node(last_node, self.related_node_template)]
+        encoded = []
         append = encoded.append
-        for relationship in path.relationships:
-            if relationship.nodes[0] == last_node:
+        for i, relationship in enumerate(path.relationships):
+            append(self._encode_node(path.nodes[i], self.related_node_template))
+            if relationship.nodes[0] == path.nodes[i]:
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"->")
-                last_node = relationship.nodes[-1]
             else:
                 append(u"<-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"-")
-                last_node = relationship.nodes[0]
-            append(self._encode_node(last_node, self.related_node_template))
+        append(self._encode_node(path.nodes[-1], self.related_node_template))
         return u"".join(encoded)
 
     def _encode_node(self, node, template):

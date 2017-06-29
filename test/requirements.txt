@@ -1,2 +1,5 @@
 coverage
+neo4j-driver>=1.4.0
+pytest
+pytest-cov
 tox
