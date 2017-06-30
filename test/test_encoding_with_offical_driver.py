@@ -27,59 +27,71 @@ class CypherNodeRepresentationTestCase(TestCase):
 
     def test_should_encode_empty_node(self):
         a = Node()
+        a.id = 1
         encoded = cypher_repr(a)
-        self.assertEqual(u"({})", encoded)
+        self.assertEqual(u"(#1 {})", encoded)
 
     def test_should_encode_node_with_property(self):
         a = Node([], {"name": "Alice"})
+        a.id = 1
         encoded = cypher_repr(a)
-        self.assertEqual(u"({name: 'Alice'})", encoded)
+        self.assertEqual(u"(#1 {name: 'Alice'})", encoded)
 
     def test_should_encode_node_with_label(self):
         a = Node(["Person"])
+        a.id = 1
         encoded = cypher_repr(a)
-        self.assertEqual(u"(:Person {})", encoded)
+        self.assertEqual(u"(#1:Person {})", encoded)
 
     def test_should_encode_node_with_label_and_property(self):
         a = Node(["Person"], {"name": "Alice"})
+        a.id = 1
         encoded = cypher_repr(a)
-        self.assertEqual(u"(:Person {name: 'Alice'})", encoded)
+        self.assertEqual(u"(#1:Person {name: 'Alice'})", encoded)
 
 
 class CypherRelationshipRepresentationTestCase(TestCase):
 
     def test_can_encode_relationship(self):
         a = Node()
+        a.id = 1
         b = Node()
+        b.id = 2
         ab = Relationship(a, b, "TO")
         encoded = cypher_repr(ab)
-        self.assertEqual("()-[:TO {}]->()", encoded)
+        self.assertEqual("(#1)-[:TO {}]->(#2)", encoded)
 
     def test_can_encode_relationship_with_numeric_endpoints(self):
         ab = Relationship(1, 2, "TO")
         encoded = cypher_repr(ab)
-        self.assertEqual("(1)-[:TO {}]->(2)", encoded)
+        self.assertEqual("(#1)-[:TO {}]->(#2)", encoded)
 
     def test_can_encode_relationship_with_names(self):
         a = Node(["Person"], {"name": "Alice"})
+        a.id = 1
         b = Node(["Person"], {"name": "Bob"})
+        b.id = 2
         ab = Relationship(a, b, "KNOWS")
         encoded = cypher_repr(ab)
-        self.assertEqual("(Alice)-[:KNOWS {}]->(Bob)", encoded)
+        self.assertEqual("(#1)-[:KNOWS {}]->(#2)", encoded)
 
     def test_can_encode_relationship_with_alternative_names(self):
         a = Node(["Person"], {"nom": u"Aimée"})
+        a.id = 1
         b = Node(["Person"], {"nom": u"Baptiste"})
+        b.id = 2
         ab = Relationship(a, b, u"CONNAÎT")
         encoded = cypher_repr(ab, related_node_template=u"{property.nom}")
         self.assertEqual(u"(Aimée)-[:CONNAÎT {}]->(Baptiste)", encoded)
 
     def test_can_encode_relationship_with_properties(self):
         a = Node(["Person"], {"name": "Alice"})
+        a.id = 1
         b = Node(["Person"], {"name": "Bob"})
+        b.id = 2
         ab = Relationship(a, b, "KNOWS", since=1999)
         encoded = cypher_repr(ab)
-        self.assertEqual("(Alice)-[:KNOWS {since: 1999}]->(Bob)", encoded)
+        self.assertEqual("(#1)-[:KNOWS {since: 1999}]->(#2)", encoded)
 
 
 class CypherPathRepresentationTestCase(TestCase):
@@ -96,4 +108,4 @@ class CypherPathRepresentationTestCase(TestCase):
         cd = Relationship(carol, dave, "KNOWS")
         path = Path(alice, ab, bob, cb, carol, cd, dave)
         encoded = cypher_repr(path)
-        self.assertEqual("(Alice)-[:LOVES {}]->(Bob)<-[:HATES {}]-(Carol)-[:KNOWS {}]->(Dave)", encoded)
+        self.assertEqual("(#1)-[:LOVES {}]->(#2)<-[:HATES {}]-(#3)-[:KNOWS {}]->(#4)", encoded)

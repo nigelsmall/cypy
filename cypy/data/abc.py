@@ -61,6 +61,12 @@ class GraphNode(GraphStructure, Mapping):
     """
 
     @abstractproperty
+    def id(self):
+        """ The unique identifier for this node
+        """
+        raise None
+
+    @abstractproperty
     def labels(self):
         """ The set of all labels on this node.
         """

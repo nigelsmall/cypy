@@ -151,8 +151,8 @@ class CypherEncoder(object):
     quote = None
     sequence_separator = u", "
     key_value_separator = u": "
-    node_template = u"{labels} {properties}"
-    related_node_template = u"{property.name}"
+    node_template = u"#{id}{labels} {properties}"
+    related_node_template = u"#{id}"
     relationship_template = u"{type} {properties}"
 
     def __init__(self, encoding=None, quote=None, sequence_separator=None, key_value_separator=None,
@@ -258,7 +258,7 @@ class CypherEncoder(object):
         append = encoded.append
         for i, relationship in enumerate(path.relationships):
             append(self._encode_node(path.nodes[i], self.related_node_template))
-            if relationship.nodes[0] == path.nodes[i]:
+            if self._node_id(relationship.nodes[0]) == self._node_id(path.nodes[i]):
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"->")
@@ -269,19 +269,25 @@ class CypherEncoder(object):
         append(self._encode_node(path.nodes[-1], self.related_node_template))
         return u"".join(encoded)
 
+    @classmethod
+    def _node_id(cls, node):
+        return node.id if hasattr(node, "id") else node
+
     def _encode_node(self, node, template):
-        try:
-            return u"(" + template.format(
-                labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
-                properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
-                property=PropertySelector(node, u""),
-            ).strip() + u")"
-        except (AttributeError, TypeError):
-            return u"({})".format(node)
+        if not hasattr(node, "id"):
+            from cypy.data import NodeReference
+            node = NodeReference(node)
+        return u"(" + template.format(
+            id=node.id,
+            labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
+            properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
+            property=PropertySelector(node, u""),
+        ).strip() + u")"
 
     def _encode_relationship_detail(self, relationship, template):
         from cypy.data import Relationship
         return u"[" + template.format(
+            id=relationship.id,
             type=u":" + getattr(relationship, "type", Relationship.default_type(relationship)),
             properties=PropertyDictView(relationship, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(relationship, u""),

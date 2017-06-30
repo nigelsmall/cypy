@@ -112,7 +112,7 @@ class GraphTestCase(TestCase):
             return key
 
         graph = Graph()
-        graph.__graph_store__().new_node_key = new_node_key
+        graph.__graph_store__().new_node_id = new_node_key
         a = graph.create("Person", "Employee", name="Alice", age=33)
         b = graph.create("Person", name="Bob", age=44)
         c = graph.create("Person", "Employee", name="Carol", age=55)

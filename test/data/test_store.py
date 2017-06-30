@@ -193,11 +193,11 @@ class GraphStoreTestCase(TestCase):
 
     def test_should_get_node_degree(self):
         store = FrozenGraphStore(self.store)
-        assert store.relationship_count(n_keys={self.a}) == 4
-        assert store.relationship_count(r_type="LIKES", n_keys={self.a}) == 2
-        assert store.relationship_count(n_keys={self.b}) == 4
-        assert store.relationship_count(n_keys={self.c}) == 3
-        assert store.relationship_count(n_keys={self.d}) == 1
+        assert store.relationship_count(n_ids={self.a}) == 4
+        assert store.relationship_count(r_type="LIKES", n_ids={self.a}) == 2
+        assert store.relationship_count(n_ids={self.b}) == 4
+        assert store.relationship_count(n_ids={self.c}) == 3
+        assert store.relationship_count(n_ids={self.d}) == 1
 
     def test_should_get_nodes(self):
         store = FrozenGraphStore(self.store)
@@ -236,29 +236,29 @@ class GraphStoreTestCase(TestCase):
         assert set(store.relationships()) == {self.a_likes_b, self.b_likes_a, self.a_knows_b, self.a_knows_c, self.c_knows_b, self.c_married_to_d}
         assert set(store.relationships("KNOWS")) == {self.a_knows_b, self.a_knows_c, self.c_knows_b}
         assert set(store.relationships("MARRIED_TO")) == {self.c_married_to_d}
-        assert set(store.relationships(n_keys=(self.a, None))) == {self.a_likes_b, self.a_knows_b, self.a_knows_c}
+        assert set(store.relationships(n_ids=(self.a, None))) == {self.a_likes_b, self.a_knows_b, self.a_knows_c}
         assert set(store.relationships("KNOWS", (self.a, None))) == {self.a_knows_b, self.a_knows_c}
-        assert set(store.relationships(n_keys=(None, self.b))) == {self.a_likes_b, self.a_knows_b, self.c_knows_b}
-        assert set(store.relationships("KNOWS", n_keys=(None, self.b))) == {self.a_knows_b, self.c_knows_b}
-        assert set(store.relationships(n_keys=(self.a, self.b))) == {self.a_likes_b, self.a_knows_b}
+        assert set(store.relationships(n_ids=(None, self.b))) == {self.a_likes_b, self.a_knows_b, self.c_knows_b}
+        assert set(store.relationships("KNOWS", n_ids=(None, self.b))) == {self.a_knows_b, self.c_knows_b}
+        assert set(store.relationships(n_ids=(self.a, self.b))) == {self.a_likes_b, self.a_knows_b}
         assert set(store.relationships("KNOWS", (self.a, self.b))) == {self.a_knows_b}
-        assert set(store.relationships(n_keys={self.a})) == {self.a_likes_b, self.b_likes_a, self.a_knows_b, self.a_knows_c}
+        assert set(store.relationships(n_ids={self.a})) == {self.a_likes_b, self.b_likes_a, self.a_knows_b, self.a_knows_c}
         assert set(store.relationships("KNOWS", {self.a})) == {self.a_knows_b, self.a_knows_c}
-        assert set(store.relationships(n_keys={self.a, self.b})) == {self.a_likes_b, self.b_likes_a, self.a_knows_b}
-        assert set(store.relationships("KNOWS", n_keys={self.a, self.b})) == {self.a_knows_b}
+        assert set(store.relationships(n_ids={self.a, self.b})) == {self.a_likes_b, self.b_likes_a, self.a_knows_b}
+        assert set(store.relationships("KNOWS", n_ids={self.a, self.b})) == {self.a_knows_b}
 
     def test_should_fail_on_bad_node_sequence(self):
         store = FrozenGraphStore(self.store)
-        assert list(store.relationships(n_keys=(self.a, self.b, self.c))) == []
+        assert list(store.relationships(n_ids=(self.a, self.b, self.c))) == []
 
     def test_should_fail_on_bad_node_set(self):
         store = FrozenGraphStore(self.store)
-        _ = store.relationships(n_keys={self.a, self.b, self.c})
+        _ = store.relationships(n_ids={self.a, self.b, self.c})
 
     def test_should_fail_on_bad_node_type(self):
         store = FrozenGraphStore(self.store)
         with self.assertRaises(TypeError):
-            _ = store.relationships(n_keys=1)
+            _ = store.relationships(n_ids=1)
 
     def test_should_get_relationship_nodes(self):
         store = FrozenGraphStore(self.store)

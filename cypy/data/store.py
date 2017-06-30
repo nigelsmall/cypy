@@ -355,11 +355,11 @@ class GraphStore(GraphStructure):
         return cls(GraphStore(nodes, relationships))
 
     @classmethod
-    def new_node_key(cls):
+    def new_node_id(cls):
         return uuid4()
 
     @classmethod
-    def new_relationship_key(cls):
+    def new_relationship_id(cls):
         return uuid4()
 
     def __init__(self,
@@ -414,15 +414,15 @@ class GraphStore(GraphStructure):
 
     def _build_relationships_by_type(self):
         data = {}
-        for r_key, (r_type, _, _) in self._relationships.items():
-            data.setdefault(r_type, set()).add(r_key)
+        for r_id, (r_type, _, _) in self._relationships.items():
+            data.setdefault(r_type, set()).add(r_id)
         self._relationships_by_type = data
 
     def _build_relationships_by_node(self):
         data = {}
-        for r_key, (_, n_keys, _) in self._relationships.items():
-            for n_index, n_key in enumerate_nodes(n_keys):
-                data.setdefault(n_key, set()).add((r_key, n_index))
+        for r_id, (_, n_ids, _) in self._relationships.items():
+            for n_index, n_id in enumerate_nodes(n_ids):
+                data.setdefault(n_id, set()).add((r_id, n_index))
         self._relationships_by_node = data
 
     def node_count(self, *n_labels):
@@ -443,73 +443,73 @@ class GraphStore(GraphStructure):
         optionally filtered by label.
         """
         if n_labels:
-            n_keys = ()
-            n_key_sets = []
+            n_ids = ()
+            n_id_sets = []
             for n_label in set(n_labels):
                 try:
-                    n_key_sets.append(self._nodes_by_label[n_label])
+                    n_id_sets.append(self._nodes_by_label[n_label])
                 except KeyError:
                     break
             else:
-                n_keys = reduce(and_operator, n_key_sets)
+                n_ids = reduce(and_operator, n_id_sets)
         else:
-            n_keys = self._nodes.keys()
-        for n_key in n_keys:
-            yield n_key
+            n_ids = self._nodes.keys()
+        for n_id in n_ids:
+            yield n_id
 
-    def node_labels(self, n_key=None):
+    def node_labels(self, n_id=None):
         """ Return the set of labels in this store or those for a specific node.
         """
-        if n_key is None:
+        if n_id is None:
             return frozenset(self._nodes_by_label.keys())
         else:
             try:
-                node_entry = self._nodes[n_key]
+                node_entry = self._nodes[n_id]
             except KeyError:
                 return None
             else:
                 return node_entry.labels
 
-    def node_properties(self, n_key):
+    def node_properties(self, n_id):
         try:
-            node_entry = self._nodes[n_key]
+            node_entry = self._nodes[n_id]
         except KeyError:
             return None
         else:
             return node_entry.properties
 
-    def relationship_count(self, r_type=None, n_keys=()):
+    def relationship_count(self, r_type=None, n_ids=()):
         """ Count relationships filtered by type and endpoint.
         """
-        if r_type is None and not n_keys:
+        if r_type is None and not n_ids:
             return len(self._relationships)
-        elif not n_keys:
+        elif not n_ids:
             return len(self._relationships_by_type.get(r_type, ()))
         else:
-            return sum(1 for _ in self.relationships(r_type, n_keys))
+            return sum(1 for _ in self.relationships(r_type, n_ids))
 
-    def relationships(self, r_type=None, n_keys=()):
+    def relationships(self, r_type=None, n_ids=()):
         """ Match relationships filtered by type and endpoint.
 
         :param r_type:
-        :param n_keys:
+        :param n_ids:
         :return:
         """
         if r_type is None:
             r_sets = []
         else:
             r_sets = [self._relationships_by_type.get(r_type, frozenset())]
-        if not n_keys or (hasattr(n_keys, "__iter__") and all(n_key is None for n_key in n_keys)):
+        if not n_ids or (hasattr(n_ids, "__iter__") and all(n_id is None for n_id in n_ids)):
             pass
-        elif isinstance(n_keys, Sequence):
-            for n_index, n_key in enumerate_nodes(n_keys):
-                if n_key is not None:
-                    r_sets.append({r_key for r_key, i in self._relationships_by_node.get(n_key, ())
+        elif isinstance(n_ids, Sequence):
+            for n_index, n_id in enumerate_nodes(n_ids):
+                if n_id is not None:
+                    r_sets.append({r_id for r_id, i in self._relationships_by_node.get(n_id, ())
                                    if i == n_index})
-        elif isinstance(n_keys, Set):
-            for n_key in n_keys:
-                if n_key is not None:
-                    r_sets.append({r_key for r_key, i in self._relationships_by_node.get(n_key, ())})
+        elif isinstance(n_ids, Set):
+            for n_id in n_ids:
+                if n_id is not None:
+                    r_sets.append({r_id for r_id, i in self._relationships_by_node.get(n_id, ())})
         else:
             raise TypeError("Nodes must be supplied as a Sequence or a Set")
         if r_sets:
@@ -517,25 +517,25 @@ class GraphStore(GraphStructure):
         else:
             return iter(self._relationships)
 
-    def relationship_nodes(self, r_key):
+    def relationship_nodes(self, r_id):
         try:
-            relationship_entry = self._relationships[r_key]
+            relationship_entry = self._relationships[r_id]
         except KeyError:
             return None
         else:
             return relationship_entry.nodes
 
-    def relationship_properties(self, r_key):
+    def relationship_properties(self, r_id):
         try:
-            relationship_entry = self._relationships[r_key]
+            relationship_entry = self._relationships[r_id]
         except KeyError:
             return None
         else:
             return relationship_entry.properties
 
-    def relationship_type(self, r_key):
+    def relationship_type(self, r_id):
         try:
-            relationship_entry = self._relationships[r_key]
+            relationship_entry = self._relationships[r_id]
         except KeyError:
             return None
         else:
@@ -628,8 +628,8 @@ class MutableGraphStore(GraphStore):
             self._relationships_by_type.setdefault(type_, set()).update(relationships)
 
     def _update_relationships_by_node(self, relationships_by_node):
-        for n_key, entry in relationships_by_node.items():
-            self._relationships_by_node.setdefault(n_key, set()).update(entry)
+        for n_id, entry in relationships_by_node.items():
+            self._relationships_by_node.setdefault(n_id, set()).update(entry)
 
     def update(self, graph_store):
         if isinstance(graph_store, GraphStore):
@@ -643,68 +643,68 @@ class MutableGraphStore(GraphStore):
             raise TypeError("Argument is not a graph store")
 
     def add_nodes(self, entries):
-        n_keys = []
+        n_ids = []
         nodes = {}
         nodes_by_label = {}
         for entry in entries:
-            n_key = self.new_node_key()
-            mutable_entry = self.node_entry(n_key, entry)
-            nodes[n_key] = mutable_entry
+            n_id = self.new_node_id()
+            mutable_entry = self.node_entry(n_id, entry)
+            nodes[n_id] = mutable_entry
             for label in mutable_entry.labels:
-                nodes_by_label.setdefault(label, set()).add(n_key)
-            n_keys.append(n_key)
+                nodes_by_label.setdefault(label, set()).add(n_id)
+            n_ids.append(n_id)
         with self._lock:
             self._update_nodes(nodes)
             self._update_nodes_by_label(nodes_by_label)
-        return n_keys
+        return n_ids
 
-    def remove_nodes(self, n_keys):
+    def remove_nodes(self, n_ids):
         with self._lock:
-            for n_key in list(n_keys):
+            for n_id in list(n_ids):
                 # Remove from _nodes
                 try:
-                    n_labels, n_properties = self._nodes[n_key]
+                    n_labels, n_properties = self._nodes[n_id]
                 except KeyError:
                     continue
                 else:
-                    del self._nodes[n_key]
+                    del self._nodes[n_id]
                 # Remove from _nodes_by_label
                 for n_label in n_labels:
-                    discard_value(self._nodes_by_label, n_label, n_key)
+                    discard_value(self._nodes_by_label, n_label, n_id)
                 # Remove relationships
                 try:
-                    self.remove_relationships(r_key for r_key, _ in self._relationships_by_node[n_key])
+                    self.remove_relationships(r_id for r_id, _ in self._relationships_by_node[n_id])
                 except KeyError:
                     pass
 
     def add_relationships(self, entries):
-        r_keys = []
+        r_ids = []
         with self._lock:
-            for r_type, n_keys, r_properties in entries:
-                r_key = self.new_relationship_key()
-                mutable_entry = self.relationship_entry((r_type, n_keys, r_properties))
-                self._relationships[r_key] = mutable_entry
-                self._relationships_by_type.setdefault(r_type, set()).add(r_key)
-                for n_index, n_key in enumerate_nodes(n_keys):
-                    self._relationships_by_node.setdefault(n_key, set()).add((r_key, n_index))
-                r_keys.append(r_key)
-        return r_keys
+            for r_type, n_ids, r_properties in entries:
+                r_id = self.new_relationship_id()
+                mutable_entry = self.relationship_entry((r_type, n_ids, r_properties))
+                self._relationships[r_id] = mutable_entry
+                self._relationships_by_type.setdefault(r_type, set()).add(r_id)
+                for n_index, n_id in enumerate_nodes(n_ids):
+                    self._relationships_by_node.setdefault(n_id, set()).add((r_id, n_index))
+                r_ids.append(r_id)
+        return r_ids
 
-    def remove_relationships(self, r_keys):
+    def remove_relationships(self, r_ids):
         with self._lock:
-            for r_key in list(r_keys):
+            for r_id in list(r_ids):
                 # Remove from _relationships
                 try:
-                    r_type, n_keys, r_properties = self._relationships[r_key]
+                    r_type, n_ids, r_properties = self._relationships[r_id]
                 except KeyError:
                     continue
                 else:
-                    del self._relationships[r_key]
+                    del self._relationships[r_id]
                 # Remove from _relationships_by_type
-                discard_value(self._relationships_by_type, r_type, r_key)
+                discard_value(self._relationships_by_type, r_type, r_id)
                 # Remove from _relationships_by_node
-                for n_index, n_key in enumerate_nodes(n_keys):
-                    discard_value(self._relationships_by_node, n_key, (r_key, n_index))
+                for n_index, n_id in enumerate_nodes(n_ids):
+                    discard_value(self._relationships_by_node, n_id, (r_id, n_index))
 
 
 def enumerate_nodes(iterable):

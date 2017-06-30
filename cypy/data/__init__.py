@@ -90,28 +90,28 @@ class Subgraph(GraphStructure):
     def __hash__(self):
         return hash(self.__graph_store__())
 
-    def _node(self, uuid):
+    def _node(self, id):
         store = self._store
-        node = Node(*store.node_labels(uuid), **store.node_properties(uuid))
-        node.uuid = uuid
+        node = Node(*store.node_labels(id), **store.node_properties(id))
+        node.id = id
         return node
 
     @property
     def nodes(self):
         """ The set of nodes in this subgraph.
         """
-        return frozenset(self._node(uuid) for uuid in self._store.nodes())
+        return frozenset(self._node(id) for id in self._store.nodes())
 
     @property
     def relationships(self):
         """ The set of relationships in this subgraph.
         """
         r_set = set()
-        for uuid in self._store.relationships():
-            relationship = Relationship(self._store.relationship_type(uuid),
-                                        *map(self._node, self._store.relationship_nodes(uuid)),
-                                        **self._store.relationship_properties(uuid))
-            relationship.uuid = uuid
+        for id in self._store.relationships():
+            relationship = Relationship(self._store.relationship_type(id),
+                                        *map(self._node, self._store.relationship_nodes(id)),
+                                        **self._store.relationship_properties(id))
+            relationship.id = id
             r_set.add(relationship)
         return frozenset(r_set)
 
@@ -130,8 +130,8 @@ class Node(GraphNode):
         return 0
 
     def __init__(self, *labels, **properties):
-        self._uuid = FrozenGraphStore.new_node_key()
-        self._store = FrozenGraphStore.build({self._uuid: (labels, properties)})
+        self._id = FrozenGraphStore.new_node_id()
+        self._store = FrozenGraphStore.build({self._id: (labels, properties)})
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join(
@@ -144,19 +144,19 @@ class Node(GraphNode):
             return "({!r})".format(dict(self))
 
     def __bool__(self):
-        return bool(self._store.node_properties(self._uuid))
+        return bool(self._store.node_properties(self._id))
 
     def __nonzero__(self):
-        return bool(self._store.node_properties(self._uuid))
+        return bool(self._store.node_properties(self._id))
 
     def __len__(self):
-        return len(self._store.node_properties(self._uuid))
+        return len(self._store.node_properties(self._id))
 
     def __iter__(self):
-        return iter(self._store.node_properties(self._uuid))
+        return iter(self._store.node_properties(self._id))
 
     def __getitem__(self, key):
-        return self._store.node_properties(self._uuid)[key]
+        return self._store.node_properties(self._id)[key]
 
     def __eq__(self, other):
         try:
@@ -168,20 +168,20 @@ class Node(GraphNode):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self._uuid)
+        return hash(self._id)
 
     @property
-    def uuid(self):
+    def id(self):
         """ Unique identifier for this node.
         """
-        return self._uuid
+        return self._id
 
-    @uuid.setter
-    def uuid(self, value):
+    @id.setter
+    def id(self, value):
         store = self._store
-        old_value = self._uuid
+        old_value = self._id
         store._nodes[value] = store._nodes[old_value]
-        self._uuid = value
+        self._id = value
         del store._nodes[old_value]
         store._build_nodes_by_label()
 
@@ -189,22 +189,22 @@ class Node(GraphNode):
     def labels(self):
         """ The set of labels attached to this node.
         """
-        return self._store.node_labels(self._uuid)
+        return self._store.node_labels(self._id)
 
     def keys(self):
         """ Return the property keys for this node.
         """
-        return self._store.node_properties(self._uuid).keys()
+        return self._store.node_properties(self._id).keys()
 
     def values(self):
         """ Return the property values for this node.
         """
-        return self._store.node_properties(self._uuid).values()
+        return self._store.node_properties(self._id).values()
 
     def items(self):
         """ Return the full set of properties for this node.
         """
-        return self._store.node_properties(self._uuid).items()
+        return self._store.node_properties(self._id).items()
 
 
 class Relationship(GraphRelationship):
@@ -238,7 +238,7 @@ class Relationship(GraphRelationship):
                 other_node_key = list(store.nodes())[0]
                 node_labels = store.node_labels(other_node_key)
                 node_properties = store.node_properties(other_node_key)
-                node_key = arg.uuid
+                node_key = arg.id
                 node_keys.append(node_key)
                 nodes.append(arg)
                 node_dict[node_key] = (node_labels, node_properties)
@@ -246,8 +246,8 @@ class Relationship(GraphRelationship):
                 type_ = arg
             else:
                 raise ValueError("Relationships can only have one type and must connect nodes")
-        self._uuid = FrozenGraphStore.new_relationship_key()
-        self._store = FrozenGraphStore.build(node_dict, {self._uuid: (type_, node_keys, properties)})
+        self._id = FrozenGraphStore.new_relationship_id()
+        self._store = FrozenGraphStore.build(node_dict, {self._id: (type_, node_keys, properties)})
         self._node_keys = node_keys
         self._nodes = tuple(nodes)
 
@@ -262,24 +262,24 @@ class Relationship(GraphRelationship):
             return "()-[:{}]->()".format(self.type)
 
     def __bool__(self):
-        return bool(self._store.relationship_properties(self._uuid))
+        return bool(self._store.relationship_properties(self._id))
 
     def __nonzero__(self):
-        return bool(self._store.relationship_properties(self._uuid))
+        return bool(self._store.relationship_properties(self._id))
 
     def __len__(self):
-        return len(self._store.relationship_properties(self._uuid))
+        return len(self._store.relationship_properties(self._id))
 
     def __iter__(self):
-        return iter(self._store.relationship_properties(self._uuid))
+        return iter(self._store.relationship_properties(self._id))
 
     def __getitem__(self, key):
-        return self._store.relationship_properties(self._uuid)[key]
+        return self._store.relationship_properties(self._id)[key]
 
     def __eq__(self, other):
         try:
             return (self.type == other.type and dict(self) == dict(other) and
-                    tuple(node.uuid for node in self.nodes) == tuple(node.uuid for node in other.nodes))
+                    tuple(node.id for node in self.nodes) == tuple(node.id for node in other.nodes))
         except AttributeError:
             return False
 
@@ -287,20 +287,20 @@ class Relationship(GraphRelationship):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self._uuid)
+        return hash(self._id)
 
     @property
-    def uuid(self):
+    def id(self):
         """ Unique identifier for this node.
         """
-        return self._uuid
+        return self._id
 
-    @uuid.setter
-    def uuid(self, value):
+    @id.setter
+    def id(self, value):
         store = self._store
-        old_value = self._uuid
+        old_value = self._id
         store._relationships[value] = store._relationships[old_value]
-        self._uuid = value
+        self._id = value
         del store._relationships[old_value]
         store._build_relationships_by_node()
         store._build_relationships_by_type()
@@ -309,7 +309,7 @@ class Relationship(GraphRelationship):
     def type(self):
         """ The type of this relationship.
         """
-        return self._store.relationship_type(self._uuid) or Relationship.default_type(self)
+        return self._store.relationship_type(self._id) or Relationship.default_type(self)
 
     @property
     def nodes(self):
@@ -320,17 +320,17 @@ class Relationship(GraphRelationship):
     def keys(self):
         """ Return the property keys for this relationship.
         """
-        return self._store.relationship_properties(self._uuid).keys()
+        return self._store.relationship_properties(self._id).keys()
 
     def values(self):
         """ Return the property values for this relationship.
         """
-        return self._store.relationship_properties(self._uuid).values()
+        return self._store.relationship_properties(self._id).values()
 
     def items(self):
         """ Return the full set of properties for this relationship.
         """
-        return self._store.relationship_properties(self._uuid).items()
+        return self._store.relationship_properties(self._id).items()
 
 
 class Path(GraphPath):
@@ -440,11 +440,57 @@ class Graph(GraphStructure):
         """ Select one or more relationships by type and endpoints.
         """
         if isinstance(nodes, Sequence):
-            return RelationshipSelection(self._store, self._store.relationships(type, [node.uuid for node in nodes]))
+            return RelationshipSelection(self._store, self._store.relationships(type, [node.id for node in nodes]))
         elif isinstance(nodes, Set):
-            return RelationshipSelection(self._store, self._store.relationships(type, {node.uuid for node in nodes}))
+            return RelationshipSelection(self._store, self._store.relationships(type, {node.id for node in nodes}))
         else:
             raise TypeError("Nodes must be supplied as a Sequence or a Set")
+
+
+class NodeReference(GraphNode):
+    """ A reference to a node stored externally.
+    """
+
+    def __graph_size__(self):
+        pass
+
+    def __graph_order__(self):
+        pass
+
+    def __graph_store__(self):
+        pass
+
+    def __init__(self, id):
+        self._id = id
+
+    def __len__(self):
+        return 0
+
+    def __iter__(self):
+        return iter(())
+
+    def __getitem__(self, key):
+        return None
+
+    def __eq__(self, other):
+        try:
+            return self.id == other.id
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self._id)
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def labels(self):
+        return set()
 
 
 class NodeSelection(object):
@@ -483,40 +529,40 @@ class NodeView(GraphNode):
 
     def __init__(self, store, key):
         self._store = store
-        self._uuid = key
+        self._id = key
 
     def __repr__(self):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         return "{}({})".format(self.__class__.__name__, ", ".join(
             chain(map(repr, self.labels()), ("{}={!r}".format(*item) for item in properties.items()))))
 
     def __str__(self):
-        return "(#{}{} {!r})".format(self.uuid.hex[-7:], "".join(
-            ":{}".format(label) for label in self.labels), dict(self._store.node_properties(self._uuid)))
+        return "(#{}{} {!r})".format(self.id.hex[-7:], "".join(
+            ":{}".format(label) for label in self.labels), dict(self._store.node_properties(self._id)))
 
     def __getitem__(self, key):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         return properties[key]
 
     def __setitem__(self, key, value):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         properties[key] = value
 
     def __delitem__(self, key):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         del properties[key]
 
     def __len__(self):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         return len(properties)
 
     def __iter__(self):
-        properties = self._store.node_properties(self._uuid)
+        properties = self._store.node_properties(self._id)
         return iter(properties)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self._store == other._store and self._uuid == other._uuid
+            return self._store == other._store and self._id == other._id
         else:
             return False
 
@@ -524,14 +570,14 @@ class NodeView(GraphNode):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(id(self._store)) ^ hash(self._uuid)
+        return hash(id(self._store)) ^ hash(self._id)
 
     @property
-    def uuid(self):
-        return self._uuid
+    def id(self):
+        return self._id
 
     def labels(self):
-        return self._store.node_labels(self._uuid)
+        return self._store.node_labels(self._id)
 
     def relationships(self, type, *nodes):
         """
@@ -540,7 +586,7 @@ class NodeView(GraphNode):
         :param nodes:
         :return:
         """
-        return self._store.relationships(type, n_keys=[node.uuid for node in nodes])
+        return self._store.relationships(type, n_ids=[node.id for node in nodes])
 
     def relate(self, *type_and_nodes, **properties):
         """ Relate this node to another.
@@ -554,7 +600,7 @@ class NodeView(GraphNode):
                 nodes[i] = node = NodeView(self._store, node_key)
             if not isinstance(node, NodeView):
                 raise ValueError("Relationship endpoints must be Node or NodeView instances")
-        key, = self._store.add_relationships([(type_, [node.uuid for node in [self] + nodes], properties)])
+        key, = self._store.add_relationships([(type_, [node.id for node in [self] + nodes], properties)])
         return RelationshipView(self._store, key)
 
     def delete(self):
@@ -595,25 +641,25 @@ class RelationshipView(GraphRelationship):
     def __graph_size__(self):
         return 1
 
-    def __init__(self, store, uuid):
+    def __init__(self, store, id):
         self._store = store
-        self._uuid = uuid
+        self._id = id
 
     def __getitem__(self, key):
-        properties = self._store.relationship_properties(self._uuid)
+        properties = self._store.relationship_properties(self._id)
         return properties[key]
 
     def __len__(self):
-        properties = self._store.relationship_properties(self._uuid)
+        properties = self._store.relationship_properties(self._id)
         return len(properties)
 
     def __iter__(self):
-        properties = self._store.relationship_properties(self._uuid)
+        properties = self._store.relationship_properties(self._id)
         return iter(properties)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self._store == other._store and self._uuid == other._uuid
+            return self._store == other._store and self._id == other._id
         else:
             return False
 
@@ -621,21 +667,21 @@ class RelationshipView(GraphRelationship):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(id(self._store)) ^ hash(self._uuid)
+        return hash(id(self._store)) ^ hash(self._id)
 
     # TODO: other methods
 
     @property
-    def uuid(self):
-        return self._uuid
+    def id(self):
+        return self._id
 
     def type(self):
-        return self._store.relationship_type(self._uuid) or Relationship.default_type(self)
+        return self._store.relationship_type(self._id) or Relationship.default_type(self)
 
     def nodes(self):
         """ Return the nodes connected by this relationship.
         """
-        return tuple(self._store.relationship_nodes(self._uuid))
+        return tuple(self._store.relationship_nodes(self._id))
 
 
 def order(graph_structure):
