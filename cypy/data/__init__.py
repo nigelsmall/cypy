@@ -687,13 +687,19 @@ class RelationshipView(GraphRelationship):
 def order(graph_structure):
     """ Count the number of nodes in a graph structure.
     """
-    return graph_structure.__graph_order__()
+    try:
+        return graph_structure.__graph_order__()
+    except AttributeError:
+        raise TypeError("Object is not a graph structure")
 
 
 def size(graph_structure):
     """ Count the number of relationships in a graph structure.
     """
-    return graph_structure.__graph_size__()
+    try:
+        return graph_structure.__graph_size__()
+    except AttributeError:
+        raise TypeError("Object is not a graph structure")
 
 
 def _relationship_case(s):
