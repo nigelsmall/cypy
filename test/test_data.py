@@ -58,7 +58,9 @@ class ValueTestCase(TestCase):
         self.assertEqual(Value.coerce([1, 2, 3]), [1, 2, 3])
 
     def test_set(self):
-        self.assertEqual(Value.coerce({1, 2, 3}), [1, 2, 3])
+        coerced = Value.coerce({1, 2, 3})
+        self.assertIsInstance(coerced, list)
+        self.assertEqual(set(coerced), {1, 2, 3})
 
     def test_tuple(self):
         self.assertEqual(Value.coerce((1, 2, 3)), [1, 2, 3])
