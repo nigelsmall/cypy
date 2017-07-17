@@ -45,7 +45,7 @@ package_metadata = {
     ],
     "license": __license__,
     "classifiers": [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
