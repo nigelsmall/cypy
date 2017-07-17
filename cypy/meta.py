@@ -17,7 +17,7 @@
 
 
 __package__ = "cypy"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __description__ = "Cypher resource library for Python"
 __distribution__ = "technige.{}".format(__package__)
 __author__ = "Nigel Small <technige@nige.tech>"
