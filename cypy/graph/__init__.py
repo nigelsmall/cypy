@@ -25,8 +25,8 @@ from collections import Sequence, Set
 from itertools import chain
 from re import compile as re_compile
 
-from cypy.data.abc import GraphStructure, GraphNode, GraphRelationship, GraphPath
-from cypy.data.store import MutableGraphStore, FrozenGraphStore
+from cypy.graph.abc import GraphStructure, GraphNode, GraphRelationship, GraphPath
+from cypy.graph.store import MutableGraphStore, FrozenGraphStore
 
 
 class Subgraph(GraphStructure):

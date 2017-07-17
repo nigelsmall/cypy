@@ -52,7 +52,7 @@ class GraphStructure(object):
         return not self.__eq__(other)
 
     def __or__(self, other):
-        from cypy.data import Subgraph
+        from cypy.graph import Subgraph
         return Subgraph.union(self, other)
 
 

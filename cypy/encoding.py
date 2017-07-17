@@ -275,7 +275,7 @@ class CypherEncoder(object):
 
     def _encode_node(self, node, template):
         if not hasattr(node, "id"):
-            from cypy.data import NodeReference
+            from cypy.graph import NodeReference
             node = NodeReference(node)
         return u"(" + template.format(
             id=node.id,
@@ -285,7 +285,7 @@ class CypherEncoder(object):
         ).strip() + u")"
 
     def _encode_relationship_detail(self, relationship, template):
-        from cypy.data import Relationship
+        from cypy.graph import Relationship
         return u"[" + template.format(
             id=relationship.id,
             type=u":" + getattr(relationship, "type", Relationship.default_type(relationship)),

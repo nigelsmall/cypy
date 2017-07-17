@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data import Subgraph, Node, Relationship, Path
+from cypy.graph import Subgraph, Node, Relationship, Path
 
 a = Node("Person", name="Alice")
 b = Node("Person", name="Bob")

@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.data import Subgraph, Node, Relationship, order, size
+from cypy.graph import Subgraph, Node, Relationship, order, size
 
 
 class SubgraphTestCase(TestCase):

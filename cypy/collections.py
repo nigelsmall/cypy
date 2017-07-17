@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 class ReactiveSet(set):
     """ A :class:`set` that can trigger callbacks for each element added
     or removed.
@@ -59,30 +61,65 @@ class ReactiveSet(set):
         return self
 
     def add(self, element):
+        """ Add an element to the set.
+
+        :triggers: `on_add`
+        """
         if element not in self:
             set.add(self, element)
             if callable(self._on_add):
                 self._on_add(element)
 
     def remove(self, element):
+        """ Remove an element from the set.
+
+        :triggers: `on_remove`
+        """
         set.remove(self, element)
         if callable(self._on_remove):
             self._on_remove(element)
 
     def discard(self, element):
+        """ Discard an element from the set.
+
+        :triggers: `on_remove`
+        """
         if element in self:
             set.discard(self, element)
             if callable(self._on_remove):
                 self._on_remove(element)
 
     def pop(self):
+        """ Remove an arbitrary element from the set.
+
+        :triggers: `on_remove`
+        """
         element = set.pop(self)
         if callable(self._on_remove):
             self._on_remove(element)
         return element
 
     def clear(self):
+        """ Remove all elements from the set.
+
+        :triggers: `on_remove`
+        """
         elements = set(self)
         set.clear(self)
         if callable(self._on_remove):
             self._on_remove(*elements)
+
+
+def iter_items(iterable):
+    """ Iterate through all items (key-value pairs) within an iterable
+    dictionary-like object. If the object has a `keys` method, this is
+    used along with `__getitem__` to yield each pair in turn. If no
+    `keys` method exists, each iterable element is assumed to be a
+    2-tuple of key and value.
+    """
+    if hasattr(iterable, "keys"):
+        for key in iterable.keys():
+            yield key, iterable[key]
+    else:
+        for key, value in iterable:
+            yield key, value

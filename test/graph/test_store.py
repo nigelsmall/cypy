@@ -19,8 +19,7 @@
 from unittest import TestCase
 
 import cypy
-from cypy.collections import ReactiveSet
-from cypy.data.store import FrozenGraphStore, MutableGraphStore
+from cypy.graph.store import FrozenGraphStore, MutableGraphStore
 
 _n = 65
 
@@ -32,131 +31,7 @@ def _counter():
     finally:
         _n += 1
 
-cypy.data.store.new_key = _counter
-
-
-class ReactiveSetTestCase(TestCase):
-
-    @staticmethod
-    def new_set(elements, added, removed):
-        s = ReactiveSet(elements, on_add=lambda *x: added.update(set(x)), on_remove=lambda *x: removed.update(set(x)))
-        added.clear()
-        removed.clear()
-        return s
-
-    def test_ior(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s |= {2, 3}
-        assert s == {1, 2, 3}
-        assert added == {3}
-        assert not removed
-
-    def test_iand(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s &= {2, 3}
-        assert s == {2}
-        assert not added
-        assert removed == {1, 3}
-
-    def test_isub(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s -= {2, 3}
-        assert s == {1}
-        assert not added
-        assert removed == {2}
-
-    def test_ixor(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s ^= {2, 3}
-        assert s == {1, 3}
-        assert added == {3}
-        assert removed == {2}
-
-    def test_add_existing(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.add(2)
-        assert s == {1, 2}
-        assert not added
-        assert not removed
-
-    def test_add_other(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.add(3)
-        assert s == {1, 2, 3}
-        assert added == {3}
-        assert not removed
-
-    def test_remove_existing(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.remove(2)
-        assert s == {1}
-        assert not added
-        assert removed == {2}
-
-    def test_remove_other(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        with self.assertRaises(KeyError):
-            s.remove(3)
-
-    def test_discard_existing(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.discard(2)
-        assert s == {1}
-        assert not added
-        assert removed == {2}
-
-    def test_discard_other(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.discard(3)
-        assert s == {1, 2}
-        assert not added
-        assert not removed
-
-    def test_pop_from_populated(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1}, added, removed)
-        popped = s.pop()
-        assert popped == 1
-        assert not s
-        assert not added
-        assert removed == {1}
-
-    def test_pop_from_empty(self):
-        added = set()
-        removed = set()
-        s = self.new_set({}, added, removed)
-        with self.assertRaises(KeyError):
-            _ = s.pop()
-
-    def test_clear(self):
-        added = set()
-        removed = set()
-        s = self.new_set({1, 2}, added, removed)
-        s.clear()
-        assert not s
-        assert not added
-        assert removed == {1, 2}
+cypy.graph.store.new_key = _counter
 
 
 class GraphStoreTestCase(TestCase):

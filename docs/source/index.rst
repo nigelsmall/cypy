@@ -18,9 +18,10 @@ Contents
 
    collections
    data
-   data.abc
-   data.store
    encoding
+   graph
+   graph.abc
+   graph.store
    lex
 
 

@@ -17,15 +17,80 @@
 
 
 try:
-    long
-except NameError:
-    integer = (int,)
-else:
-    integer = (int, long)
-
-try:
     unicode
+
 except NameError:
-    unicode = str
+
+    # Python 3
+    atomic_types = (bool, bytearray, bytes, float, int, str)
+
+    bytes_types = (bytearray, bytes)
+    integer_types = (int,)
+    unicode_types = (str,)
+    utf8_types = ()
+
+    def bstr(value, encoding="utf-8"):
+        """ Convert a value to a byte string, held in a Python `bytearray` object.
+        """
+        if isinstance(value, bytearray):
+            return value
+        elif isinstance(value, bytes):
+            return bytearray(value)
+        elif isinstance(value, str):
+            return bytearray(value.encode(encoding=encoding))
+        else:
+            try:
+                return bytearray(value.__bytes__())
+            except AttributeError:
+                return bytearray(str(value).encode(encoding=encoding))
+
+    def ustr(value, encoding="utf-8"):
+        """ Convert a value to a Unicode string, held in a Python `str` object.
+        """
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, (bytes, bytearray)):
+            return value.decode(encoding=encoding)
+        else:
+            try:
+                return value.__str__()
+            except AttributeError:
+                return str(value, encoding=encoding)
+
 else:
-    unicode = unicode
+
+    # Python 2
+    atomic_types = (bool, bytearray, float, int, long, str, unicode)
+
+    bytes_types = (bytearray,)
+    integer_types = (int, long)
+    unicode_types = (unicode,)
+    utf8_types = (str,)
+
+    def bstr(value, encoding="utf-8"):
+        """ Convert a value to byte string, held in a Python `bytearray` object.
+        """
+        if isinstance(value, bytearray):
+            return value
+        elif isinstance(value, bytes):
+            return bytearray(value)
+        elif isinstance(value, unicode):
+            return bytearray(value.encode(encoding=encoding))
+        else:
+            try:
+                return bytearray(value.__bytes__())
+            except AttributeError:
+                return bytearray(unicode(value).encode(encoding=encoding))
+
+    def ustr(value, encoding="utf-8"):
+        """ Convert a value to a Unicode string, held in a Python `unicode` object.
+        """
+        if isinstance(value, unicode):
+            return value
+        elif isinstance(value, (bytes, bytearray)):
+            return value.decode(encoding=encoding)
+        else:
+            try:
+                return value.__unicode__()
+            except AttributeError:
+                return str(value).decode(encoding=encoding)

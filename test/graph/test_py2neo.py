@@ -18,8 +18,8 @@
 
 from unittest import TestCase
 
-from cypy.data import Subgraph, Node, Relationship, order, size
-from cypy.data.store import PropertyDict
+from cypy.graph import Subgraph, Node, Relationship, order, size
+from cypy.graph.store import PropertyDict
 
 
 alice = Node("Person", "Employee", name="Alice", age=33)
@@ -58,23 +58,19 @@ class PropertyCoercionTestCase(TestCase):
 
     def test_byte_strings_are_supported(self):
         props = PropertyDict({"value": b"hello, world"})
-        assert props == {"value": u"hello, world"}
+        assert props == {"value": b"hello, world"}
 
     def test_unicode_strings_are_supported(self):
         props = PropertyDict({"value": u"hello, world"})
         assert props == {"value": u"hello, world"}
 
-    def test_byte_arrays_are_not_supported(self):
-        with self.assertRaises(TypeError):
-            PropertyDict({"value": bytearray(b"hello, world")})
+    def test_byte_arrays_are_supported(self):
+        props = PropertyDict({"value": bytearray(b"hello, world")})
+        self.assertEqual(props, {"value": b"hello, world"})
 
     def test_homogenous_list(self):
         props = PropertyDict({"value": [1, 2, 3]})
         assert props == {"value": [1, 2, 3]}
-
-    def test_homogenous_list_of_strings(self):
-        props = PropertyDict({"value": [u"hello", b"world"]})
-        assert props == {"value": [u"hello", u"world"]}
 
 
 class PropertySetTestCase(TestCase):
