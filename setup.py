@@ -28,7 +28,7 @@ with open("README.rst") as f:
     long_description = f.read()
 
 
-packages = find_packages(exclude=("test", "test.*"))
+packages = find_packages(exclude=("bin", "test", "test.*"))
 package_metadata = {
     "name": __distribution__,
     "version": __version__,
