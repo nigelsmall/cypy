@@ -93,7 +93,7 @@ class RecordTestCase(TestCase):
         self.assertEqual(self.record.index("one"), 0)
 
     def test_non_existent_record_index(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(KeyError):
             self.record.index("four")
 
     def test_record_keys(self):

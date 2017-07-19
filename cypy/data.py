@@ -237,7 +237,10 @@ class Record(tuple):
             return default
 
     def index(self, key):
-        return self.__keys.index(key)
+        try:
+            return self.__keys.index(key)
+        except ValueError:
+            raise KeyError(key)
 
     def keys(self):
         return self.__keys
