@@ -57,7 +57,7 @@
 
     .. method:: index(key)
 
-        Return the index of the field identified by `key`, raising a :py:class:`ValueError` if `key` is not found.
+        Return the index of the field identified by `key`, raising a :py:class:`KeyError` if `key` is not found.
 
     .. method:: keys()
 
