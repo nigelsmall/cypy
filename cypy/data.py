@@ -236,6 +236,9 @@ class Record(tuple):
         else:
             return default
 
+    def index(self, key):
+        return self.__keys.index(key)
+
     def keys(self):
         return self.__keys
 

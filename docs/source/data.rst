@@ -55,6 +55,10 @@
 
         Return the value of *record* named by *key* or *default* if the key does not exist.
 
+    .. method:: index(key)
+
+        Return the index of the field identified by `key`, raising a :py:class:`ValueError` if `key` is not found.
+
     .. method:: keys()
 
         Return a :py:class:`tuple` of keys.

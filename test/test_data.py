@@ -89,6 +89,13 @@ class RecordTestCase(TestCase):
     def test_record_size(self):
         self.assertEqual(len(self.record), len(self.record_data))
 
+    def test_record_index(self):
+        self.assertEqual(self.record.index("one"), 0)
+
+    def test_non_existent_record_index(self):
+        with self.assertRaises(ValueError):
+            self.record.index("four")
+
     def test_record_keys(self):
         self.assertEqual(list(self.record.keys()), [key for key, _ in self.record_data])
 
