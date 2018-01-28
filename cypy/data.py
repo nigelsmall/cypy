@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright 2011-2017, Nigel Small
+# Copyright 2011-2018, Nigel Small
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ class Value(object):
         =====================  ===============  ===========  =====
 
         """
+        from cypy.graph import Node, Relationship, Path
         if value is None:
             return cls.coerce_null(value)
         elif isinstance(value, bool):
@@ -89,6 +90,12 @@ class Value(object):
             return cls.coerce_string(value, encoding)
         elif isinstance(value, bytes_types):
             return cls.coerce_bytes(value, encoding)
+        elif isinstance(value, Node):
+            return cls.coerce_node(value, encoding)
+        elif isinstance(value, Relationship):
+            return cls.coerce_relationship(value, encoding)
+        elif isinstance(value, Path):
+            return cls.coerce_path(value, encoding)
         elif isinstance(value, dict):
             return cls.coerce_map(value, encoding)
         elif hasattr(value, "__iter__"):
@@ -152,6 +159,18 @@ class Value(object):
         return ustr(value, encoding or cls.default_encoding)
 
     @classmethod
+    def coerce_node(cls, value, encoding=None):
+        return value
+
+    @classmethod
+    def coerce_relationship(cls, value, encoding=None):
+        return value
+
+    @classmethod
+    def coerce_path(cls, value, encoding=None):
+        return value
+
+    @classmethod
     def coerce_map(cls, value, encoding=None):
         """ Coerce a Python value to a Cypher Map.
 
@@ -190,6 +209,10 @@ class Record(tuple):
         inst = tuple.__new__(cls, values)
         inst.__keys = tuple(keys)
         return inst
+
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__,
+                            " ".join("%s=%r" % (field, self[i]) for i, field in enumerate(self.__keys)))
 
     def __eq__(self, other):
         return dict(self) == dict(other)
@@ -236,17 +259,90 @@ class Record(tuple):
         else:
             return default
 
-    def index(self, key):
+    def index(self, item):
+        """ Return the index of the given item.
+        """
+        if isinstance(item, integer_types):
+            if 0 <= item < len(self.__keys):
+                return item
+            raise IndexError(item)
+        else:
+            try:
+                return self.__keys.index(item)
+            except ValueError:
+                raise KeyError(item)
+
+    def value(self, item=0, default=None):
+        """ Obtain a single value from the record by index or key. If no
+        index or key is specified, the first value is returned. If the
+        specified item does not exist, the default value is returned.
+
+        :param item:
+        :param default:
+        :return:
+        """
         try:
-            return self.__keys.index(key)
-        except ValueError:
-            raise KeyError(key)
+            index = self.index(item)
+        except (IndexError, KeyError):
+            return default
+        else:
+            return self[index]
 
     def keys(self):
+        """ Return the keys of the record.
+
+        :return: tuple of key names
+        """
         return self.__keys
 
-    def values(self):
+    def values(self, *items):
+        """ Return the values of the record, optionally filtering to
+        include only certain values by index or key.
+
+        :param items: indexes or keys of the items to include; if none
+                          are provided, all values will be included
+        :return: tuple of values
+        """
+        if items:
+            d = []
+            for item in items:
+                try:
+                    i = self.index(item)
+                except KeyError:
+                    d.append(None)
+                else:
+                    d.append(self[i])
+            return tuple(d)
         return tuple(self)
 
     def items(self):
+        """ Return the fields of the record as a list of key and value tuples
+
+        :return:
+        """
         return tuple((self.__keys[i], super(Record, self).__getitem__(i)) for i in range(len(self)))
+
+    def data(self, *items):
+        """ Return the keys and values of this record as a dictionary,
+        optionally including only certain values by index or key. Keys
+        provided in the items that are not in the record will be
+        inserted with a value of :py:const:`None`; indexes provided
+        that are out of bounds will trigger an :py:`IndexError`.
+
+        :param items: indexes or keys of the items to include; if none
+                      are provided, all values will be included
+        :return: dictionary of values, keyed by field name
+        :raises: :py:`IndexError` if an out-of-bounds index is specified
+        """
+        if items:
+            d = {}
+            keys = self.__keys
+            for item in items:
+                try:
+                    i = self.index(item)
+                except KeyError:
+                    d[item] = None
+                else:
+                    d[keys[i]] = self[i]
+            return d
+        return dict(self)

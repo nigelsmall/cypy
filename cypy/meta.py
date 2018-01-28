@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright 2011-2017, Nigel Small
+# Copyright 2011-2018, Nigel Small
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 
 
 __package__ = "cypy"
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 __description__ = "Cypher resource library for Python"
 __distribution__ = "technige.{}".format(__package__)
 __author__ = "Nigel Small <technige@nige.tech>"
-__copyright__ = "2011-2017, Nigel Small"
+__copyright__ = "2011-2018, Nigel Small"
 __email__ = "{}@nige.tech".format(__package__)
 __url__ = "http://nige.tech/{}".format(__package__)
 __license__ = "Apache License, Version 2.0"

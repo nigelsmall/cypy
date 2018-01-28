@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright 2011-2017, Nigel Small
+# Copyright 2011-2018, Nigel Small
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class PropertyValue(Value):
     nullable = False
 
     @classmethod
-    def coerce_list(cls, value):
+    def coerce_list(cls, value, encoding=None):
         list_value = []
         item_type = None
         for item in value:
@@ -68,8 +68,20 @@ class PropertyValue(Value):
         return list_value
 
     @classmethod
-    def coerce_map(cls, value):
+    def coerce_map(cls, value, encoding=None):
         raise TypeError("Maps are not supported as property values")
+
+    @classmethod
+    def coerce_node(cls, value, encoding=None):
+        raise TypeError("Nodes are not supported as property values")
+
+    @classmethod
+    def coerce_relationship(cls, value, encoding=None):
+        raise TypeError("Relationships are not supported as property values")
+
+    @classmethod
+    def coerce_path(cls, value, encoding=None):
+        raise TypeError("Paths are not supported as property values")
 
 
 class PropertyRecord(Record):
