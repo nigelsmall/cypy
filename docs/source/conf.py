@@ -52,8 +52,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'CyPy'
-copyright = '2017, Nigel Small'
-author = 'Nigel Small'
+copyright = '2017, Neo4j'
+author = 'Neo4j'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -135,7 +135,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'CyPy.tex', 'CyPy Documentation',
-     'Nigel Small', 'manual'),
+     'Neo4j', 'manual'),
 ]
 
 
