@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, relationship_type, Graph, order, size
+from cypy.graph import Node, relationship_type, Graph, FrozenGraph, order, size
 
 
 KNOWS = relationship_type("KNOWS")
@@ -28,44 +28,42 @@ class GraphTestCase(TestCase):
 
     def test_should_be_able_to_create_empty_graph(self):
         g = Graph()
-        dumped = Subgraph(g)
-        assert order(dumped) == 0
-        assert size(dumped) == 0
-        assert set(dumped.nodes) == set()
-        assert set(dumped.relationships) == set()
+        assert order(g) == 0
+        assert size(g) == 0
+        assert set(g.nodes()) == set()
+        assert set(g.relationships()) == set()
 
     def test_should_be_able_to_add_node_to_graph(self):
         a = Node(name="Alice")
         g = Graph()
-        g.load(a)
-        dumped = Subgraph(g)
-        assert order(dumped) == 1
-        assert size(dumped) == 0
-        assert set(dumped.nodes) == {a}
-        assert set(dumped.relationships) == set()
+        g.update(a)
+        f = FrozenGraph(g)
+        assert order(f) == 1
+        assert size(f) == 0
+        assert set(f.nodes()) == {a}
+        assert set(f.relationships()) == set()
 
     def test_should_be_able_to_add_multiple_nodes_to_graph(self):
         a = Node(name="Alice")
         b = Node(name="Bob")
         g = Graph()
-        g.load(a)
-        g.load(b)
-        dumped = Subgraph(g)
-        assert order(dumped) == 2
-        assert size(dumped) == 0
-        assert set(dumped.nodes) == {a, b}
-        assert set(dumped.relationships) == set()
+        g.update(a)
+        g.update(b)
+        f = FrozenGraph(g)
+        assert order(f) == 2
+        assert size(f) == 0
+        assert set(f.nodes()) == {a, b}
+        assert set(f.relationships()) == set()
 
     def test_should_be_able_to_add_subgraph_to_graph(self):
         a = Node(name="Alice")
         b = Node(name="Bob")
-        g = Graph()
-        g.load(Subgraph.union(a, b))
-        dumped = Subgraph(g)
-        assert order(dumped) == 2
-        assert size(dumped) == 0
-        assert set(dumped.nodes) == {a, b}
-        assert set(dumped.relationships) == set()
+        g = Graph(a | b)
+        f = FrozenGraph(g)
+        assert order(f) == 2
+        assert size(f) == 0
+        assert set(f.nodes()) == {a, b}
+        assert set(f.relationships()) == set()
 
     def test_should_be_able_to_add_relationships_to_graph(self):
         a = Node(name="Alice")
@@ -73,20 +71,19 @@ class GraphTestCase(TestCase):
         c = Node(name="Carol")
         ab = KNOWS(a, b)
         bc = KNOWS(b, c)
-        g = Graph()
-        g.load(Subgraph.union(ab, bc))
-        dumped = Subgraph(g)
-        assert order(dumped) == 3
-        assert size(dumped) == 2
-        assert set(dumped.nodes) == {a, b, c}
-        assert set(dumped.relationships) == {ab, bc}
+        g = Graph(a | b | c | ab | bc)
+        f = FrozenGraph(g)
+        assert order(f) == 3
+        assert size(f) == 2
+        assert set(f.nodes()) == {a, b, c}
+        assert set(f.relationships()) == {ab, bc}
 
     def test_node_selection(self):
-        g = Graph()
-        a = g.create(name="Alice")
-        b = g.create("X", name="Bob")
-        c = g.create("Y", name="Carol")
-        d = g.create("X", "Y", name="Dave")
+        a = Node(name="Alice")
+        b = Node("X", name="Bob")
+        c = Node("Y", name="Carol")
+        d = Node("X", "Y", name="Dave")
+        g = Graph(a | b | c | d)
         assert set(g.nodes()) == {a, b, c, d}
         assert set(g.nodes("X")) == {b, d}
         assert set(g.nodes("Y")) == {c, d}
@@ -97,41 +94,35 @@ class GraphTestCase(TestCase):
         assert not set(g.nodes("X", "Y", "Z"))
 
     def test_node_selection_deletion(self):
-        g = Graph()
-        a = g.create(name="Alice")
-        b = g.create("X", name="Bob")
-        c = g.create("Y", name="Carol")
-        d = g.create("X", "Y", name="Dave")
-        assert set(g.nodes()) == {a, b, c, d}
+        a = Node(name="Alice")
+        b = Node("X", name="Bob")
+        c = Node("Y", name="Carol")
+        d = Node("X", "Y", name="Dave")
+        g = Graph(a | b | c | d)
+        self.assertEqual(set(g.nodes()), {a, b, c, d})
         g.nodes("Y").delete()
-        assert set(g.nodes()) == {a, b}
+        self.assertEqual(set(g.nodes()), {a, b})
 
-    def test_main(self):
-        n = [97]
-
-        def new_node_key():
-            key = chr(n[0])
-            n[0] += 1
-            return key
-
-        graph = Graph()
-        graph.__graph_store__().new_node_id = new_node_key
-        a = graph.create("Person", "Employee", name="Alice", age=33)
-        b = graph.create("Person", name="Bob", age=44)
-        c = graph.create("Person", "Employee", name="Carol", age=55)
-        d = graph.create("Person", "SelfEmployed", name="Dave", age=66)
-        e = graph.create("Person", name="Eve", age=77)
-        a.relate("KNOWS", b)
-        a.relate("KNOWS", b, c)
-        b.relate("KNOWS", a)
-        a.relate("KNOWS", c)
-        c.relate("KNOWS", a)
-        a.relate("LIKES", c)
-        c.relate("DISLIKES", b)
-        c.relate("LOVES", d)
-        d.relate("LOVES", c)
-        d.relate("WORKS_FOR", d)
-        print(graph._store.dump())
+    def test_can_update_properties_on_entities_within_a_graph(self):
+        alice = Node("Person", name="Alice")
+        bob = Node("Person", name="Bob")
+        g = Graph(alice | bob | KNOWS(alice, bob))
+        nodes = set(g.nodes())
+        self.assertEqual(len(nodes), 2)
+        a = [node for node in nodes if node["name"] == "Alice"][0]
+        b = [node for node in nodes if node["name"] == "Bob"][0]
+        self.assertIn(a, nodes)
+        self.assertIn(b, nodes)
+        relationships = list(g.relationships())
+        self.assertEqual(len(relationships), 1)
+        self.assertEqual(b["name"], "Bob")
+        b["name"] = "Robert"
+        self.assertEqual(b["name"], "Robert")
+        self.assertEqual(len(relationships), 1)
+        ab = relationships[0]
+        self.assertIsNone(ab["since"])
+        ab["since"] = 1999
+        self.assertEqual(ab["since"], 1999)
 
 
 class GraphCreateTestCase(TestCase):

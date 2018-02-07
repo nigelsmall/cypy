@@ -250,18 +250,21 @@ class CypherEncoder(object):
         return self._encode_node(node, self.node_template)
 
     def encode_relationship(self, relationship):
+        nodes = relationship.nodes()
         return u"{}-{}->{}".format(
-            self._encode_node(relationship.nodes[0], self.related_node_template),
+            self._encode_node(nodes[0], self.related_node_template),
             self._encode_relationship_detail(relationship, self.relationship_template),
-            self._encode_node(relationship.nodes[-1], self.related_node_template),
+            self._encode_node(nodes[-1], self.related_node_template),
         )
 
     def encode_path(self, path):
         encoded = []
         append = encoded.append
-        for i, relationship in enumerate(path.relationships):
-            append(self._encode_node(path.nodes[i], self.related_node_template))
-            if self._node_id(relationship.nodes[0]) == self._node_id(path.nodes[i]):
+        nodes = path.nodes()
+        for i, relationship in enumerate(path.relationships()):
+            append(self._encode_node(nodes[i], self.related_node_template))
+            related_nodes = relationship.nodes()
+            if self._node_id(related_nodes[0]) == self._node_id(nodes[i]):
                 append(u"-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"->")
@@ -269,7 +272,7 @@ class CypherEncoder(object):
                 append(u"<-")
                 append(self._encode_relationship_detail(relationship, self.relationship_template))
                 append(u"-")
-        append(self._encode_node(path.nodes[-1], self.related_node_template))
+        append(self._encode_node(nodes[-1], self.related_node_template))
         return u"".join(encoded)
 
     @classmethod
@@ -277,9 +280,6 @@ class CypherEncoder(object):
         return node.id if hasattr(node, "id") else node
 
     def _encode_node(self, node, template):
-        if not hasattr(node, "id"):
-            from cypy.graph import NodeReference
-            node = NodeReference(node)
         return u"(" + template.format(
             id=node.id,
             labels=LabelSetView(node.labels(), encoding=self.encoding, quote=self.quote),

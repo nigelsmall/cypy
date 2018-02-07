@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, relationship_type, order, size
+from cypy.graph import FrozenGraph, Node, relationship_type, order, size
 from cypy.graph.store import PropertyDict
 
 
@@ -149,11 +149,11 @@ class SubgraphTestCase(TestCase):
                 carol_married_to_dave | dave_works_for_dave)
 
     def test_nodes(self):
-        assert set(self.subgraph.nodes) == {alice, bob, carol, dave}
+        assert set(self.subgraph.nodes()) == {alice, bob, carol, dave}
 
     def test_relationships(self):
-        assert set(self.subgraph.relationships) == {alice_knows_bob, alice_likes_carol, carol_dislikes_bob,
-                                                    carol_married_to_dave, dave_works_for_dave}
+        assert set(self.subgraph.relationships()) == {alice_knows_bob, alice_likes_carol, carol_dislikes_bob,
+                                                      carol_married_to_dave, dave_works_for_dave}
 
     def test_order(self):
         assert order(self.subgraph) == 4
@@ -162,11 +162,11 @@ class SubgraphTestCase(TestCase):
         assert size(self.subgraph) == 5
 
     def test_can_infer_nodes_through_relationships(self):
-        subgraph = Subgraph(alice_knows_bob)
-        assert order(subgraph) == 2
-        assert size(subgraph) == 1
-        assert set(subgraph.nodes) == {alice, bob}
-        assert set(subgraph.relationships) == {alice_knows_bob}
+        f = FrozenGraph(alice_knows_bob)
+        assert order(f) == 2
+        assert size(f) == 1
+        assert set(f.nodes()) == {alice, bob}
+        assert set(f.relationships()) == {alice_knows_bob}
 
     def test_equality(self):
         other_subgraph = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob |
@@ -191,7 +191,7 @@ class SubgraphTestCase(TestCase):
         assert self.subgraph.__nonzero__() is True
 
     def test_empty_subgraph(self):
-        _ = Subgraph()
+        _ = FrozenGraph()
 
 
 # class WalkableTestCase(TestCase):
@@ -336,7 +336,7 @@ class NodeTestCase(TestCase):
 class RelationshipTestCase(TestCase):
 
     def test_nodes(self):
-        assert alice_knows_bob.nodes == (alice, bob)
+        assert alice_knows_bob.nodes() == (alice, bob)
 
     def test_order(self):
         assert order(alice_knows_bob) == 2
@@ -345,19 +345,19 @@ class RelationshipTestCase(TestCase):
         assert size(alice_knows_bob) == 1
 
     def test_relationship(self):
-        assert alice_knows_bob.nodes == (alice, bob)
+        assert alice_knows_bob.nodes() == (alice, bob)
         assert type(alice_knows_bob) == KNOWS
         assert dict(alice_knows_bob) == {"since": 1999}
         assert alice_knows_bob["since"] == 1999
         assert order(alice_knows_bob) == 2
         assert size(alice_knows_bob) == 1
-        assert set(alice_knows_bob.nodes) == {alice, bob}
+        assert set(alice_knows_bob.nodes()) == {alice, bob}
 
     def test_loop(self):
-        assert dave_works_for_dave.nodes == (dave, dave)
+        assert dave_works_for_dave.nodes() == (dave, dave)
         assert order(dave_works_for_dave) == 1
         assert size(dave_works_for_dave) == 1
-        assert set(dave_works_for_dave.nodes) == {dave}
+        assert set(dave_works_for_dave.nodes()) == {dave}
 
     def test_equality(self):
         other_rel = alice_knows_bob
@@ -379,7 +379,7 @@ class RelationshipLoopTestCase(TestCase):
         assert type(self.loop) == LIKES
 
     def test_nodes(self):
-        assert self.loop.nodes == (alice, alice)
+        assert self.loop.nodes() == (alice, alice)
 
     def test_order(self):
         assert order(self.loop) == 1
@@ -589,9 +589,9 @@ class UnionTestCase(TestCase):
         graph_1 = (alice_knows_bob | alice_likes_carol | carol_dislikes_bob)
         graph_2 = (carol_dislikes_bob | carol_married_to_dave | dave_works_for_dave)
         graph = graph_1 | graph_2
-        assert order(Subgraph(graph)) == 4
-        assert size(Subgraph(graph)) == 5
-        assert set(graph.nodes) == {alice, bob, carol, dave}
+        assert order(FrozenGraph(graph)) == 4
+        assert size(FrozenGraph(graph)) == 5
+        assert set(graph.nodes()) == {alice, bob, carol, dave}
 
 
 # class IntersectionTestCase(TestCase):

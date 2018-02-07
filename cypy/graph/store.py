@@ -28,7 +28,6 @@ from uuid import UUID, uuid4
 
 from cypy.collections import ReactiveSet, iter_items
 from cypy.compat import atomic_types
-from cypy.graph.abc import GraphStructure
 from cypy.data import Value, Record
 
 
@@ -166,6 +165,48 @@ class PropertyDict(dict):
     def update(self, iterable=None, **kwargs):
         for key, value in dict(iterable or {}, **kwargs).items():
             self[key] = value
+
+
+class GraphStructure(object):
+    """ A graph data storage object that is backed by a :class:`.GraphStore`.
+
+    This class defines a graph data storage protocol that allows different
+    storage objects to interact via a common store format.
+    """
+
+    @staticmethod
+    def union(*graph_structures):
+        from cypy.graph import FrozenGraph
+        store = MutableGraphStore()
+        for graph_structure in graph_structures:
+            try:
+                sub_store = graph_structure.__graph_store__()
+            except AttributeError:
+                raise TypeError("{} object is not a graph structure".format(type(graph_structure)))
+            else:
+                store.update(sub_store)
+        return FrozenGraph(store)
+
+    def __graph_store__(self):
+        raise NotImplementedError()
+
+    def __graph_order__(self):
+        raise NotImplementedError()
+
+    def __graph_size__(self):
+        raise NotImplementedError()
+
+    def __eq__(self, other):
+        try:
+            return self.__graph_store__() == other.__graph_store__()
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __or__(self, other):
+        return self.union(self, other)
 
 
 class GraphStore(GraphStructure):

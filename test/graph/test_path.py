@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, relationship_type, Path
+from cypy.graph import Node, relationship_type, Path, FrozenGraph
 
 
 a = Node("Person", name="Alice")
@@ -38,13 +38,13 @@ class PathTestCase(TestCase):
 
     def test_can_build_path_from_single_node(self):
         p = Path(a)
-        self.assertEqual(p.nodes, (a,))
-        self.assertEqual(p.relationships, ())
+        self.assertEqual(p.nodes(), (a,))
+        self.assertEqual(p.relationships(), ())
 
     def test_can_build_path_from_two_identical_nodes(self):
         p = Path(a, a)
-        self.assertEqual(p.nodes, (a,))
-        self.assertEqual(p.relationships, ())
+        self.assertEqual(p.nodes(), (a,))
+        self.assertEqual(p.relationships(), ())
 
     def test_cannot_build_path_from_two_different_nodes(self):
         with self.assertRaises(ValueError):
@@ -52,28 +52,28 @@ class PathTestCase(TestCase):
 
     def test_can_build_path_from_single_relationship(self):
         p = Path(ab)
-        self.assertEqual(p.nodes, (a, b))
-        self.assertEqual(p.relationships, (ab,))
+        self.assertEqual(p.nodes(), (a, b))
+        self.assertEqual(p.relationships(), (ab,))
 
     def test_can_build_path_from_two_relationships(self):
         p = Path(ab, bc)
-        self.assertEqual(p.nodes, (a, b, c))
-        self.assertEqual(p.relationships, (ab, bc))
+        self.assertEqual(p.nodes(), (a, b, c))
+        self.assertEqual(p.relationships(), (ab, bc))
 
     def test_can_build_path_with_reversed_relationship(self):
         p = Path(bc, dc)
-        self.assertEqual(p.nodes, (b, c, d))
-        self.assertEqual(p.relationships, (bc, dc))
+        self.assertEqual(p.nodes(), (b, c, d))
+        self.assertEqual(p.relationships(), (bc, dc))
 
     def test_can_build_path_with_initial_reversed_relationship(self):
         p = Path(dc, de)
-        self.assertEqual(p.nodes, (c, d, e))
-        self.assertEqual(p.relationships, (dc, de))
+        self.assertEqual(p.nodes(), (c, d, e))
+        self.assertEqual(p.relationships(), (dc, de))
 
     def test_can_build_path_from_multiple_relationships(self):
         p = Path(ab, bc, dc, de)
-        self.assertEqual(p.nodes, (a, b, c, d, e))
-        self.assertEqual(p.relationships, (ab, bc, dc, de))
+        self.assertEqual(p.nodes(), (a, b, c, d, e))
+        self.assertEqual(p.relationships(), (ab, bc, dc, de))
 
     def test_can_build_path_from_various_combinations(self):
         node_sets = [
@@ -90,11 +90,11 @@ class PathTestCase(TestCase):
         for n in node_sets:
             entities = [entity for entity in [n[0], r[0], n[1], r[1], n[2]] if entity is not None]
             p = Path(*entities)
-            self.assertEqual(p.nodes, (a, b, c))
-            self.assertEqual(p.relationships, (ab, bc))
+            self.assertEqual(p.nodes(), (a, b, c))
+            self.assertEqual(p.relationships(), (ab, bc))
 
     def test_subgraph_from_path(self):
         p = Path(ab, bc, dc, de)
-        s = Subgraph(p)
-        self.assertEqual(set(s.nodes), {a, b, c, d, e})
-        self.assertEqual(set(s.relationships), {ab, bc, dc, de})
+        f = FrozenGraph(p)
+        self.assertEqual(set(f.nodes()), {a, b, c, d, e})
+        self.assertEqual(set(f.relationships()), {ab, bc, dc, de})
