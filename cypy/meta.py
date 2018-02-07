@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-__version__ = "1.6.0"
+__version__ = "2.0.0"
 __description__ = "Cypher resource library for Python"
 __distribution__ = "neo4j-cypy"
 __author__ = "Neo4j <drivers@neo4j.com>"
