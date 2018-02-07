@@ -1,5 +1,4 @@
 coverage
-neo4j-driver
 pytest
 pytest-cov
 pytest-pep8
