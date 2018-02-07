@@ -90,28 +90,24 @@ class Subgraph(GraphStructure):
     def __hash__(self):
         return hash(self.__graph_store__())
 
-    def _node(self, id):
-        store = self._store
-        node = Node(*store.node_labels(id), **store.node_properties(id))
-        node.id = id
-        return node
-
     @property
     def nodes(self):
         """ The set of nodes in this subgraph.
         """
-        return frozenset(self._node(id) for id in self._store.nodes())
+        store = self._store
+        return frozenset(Node.compose(_, store.node_labels(_), store.node_properties(_)) for _ in store.nodes())
 
     @property
     def relationships(self):
         """ The set of relationships in this subgraph.
         """
+        store = self._store
         r_set = set()
         for id in self._store.relationships():
-            relationship = Relationship(self._store.relationship_type(id),
-                                        *map(self._node, self._store.relationship_nodes(id)),
-                                        **self._store.relationship_properties(id))
-            relationship.id = id
+            r_type = self._store.relationship_type(id)
+            relationship = r_type.compose(id, store.relationship_properties(id),
+                                          *(Node.compose(_, store.node_labels(_), store.node_properties(_))
+                                            for _ in store.relationship_nodes(id)))
             r_set.add(relationship)
         return frozenset(r_set)
 
@@ -129,17 +125,24 @@ class Node(GraphNode):
     def __graph_size__(self):
         return 0
 
+    @classmethod
+    def compose(cls, id, labels, properties):
+        inst = super(Node, cls).__new__(cls)
+        inst._id = id
+        inst._store = FrozenGraphStore.build({inst._id: (labels, properties)})
+        return inst
+
     def __init__(self, *labels, **properties):
         self._id = FrozenGraphStore.new_node_id()
         self._store = FrozenGraphStore.build({self._id: (labels, properties)})
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join(
-            chain(map(repr, self.labels), ("{}={!r}".format(*item) for item in dict(self).items()))))
+            chain(map(repr, self.labels()), ("{}={!r}".format(*item) for item in dict(self).items()))))
 
     def __str__(self):
-        if self.labels:
-            return "(:{} {!r})".format(":".join(self.labels), dict(self))
+        if self.labels():
+            return "(:{} {!r})".format(":".join(self.labels()), dict(self))
         else:
             return "({!r})".format(dict(self))
 
@@ -160,7 +163,7 @@ class Node(GraphNode):
 
     def __eq__(self, other):
         try:
-            return set(self.labels) == set(other.labels) and dict(self) == dict(other)
+            return set(self.labels()) == set(other.labels()) and dict(self) == dict(other)
         except AttributeError:
             return False
 
@@ -176,18 +179,10 @@ class Node(GraphNode):
         """
         return self._id
 
-    @id.setter
-    def id(self, value):
-        store = self._store
-        old_value = self._id
-        store._nodes[value] = store._nodes[old_value]
-        self._id = value
-        del store._nodes[old_value]
-        store._build_nodes_by_label()
-
-    @property
     def labels(self):
-        """ The set of labels attached to this node.
+        """ Return the set of all labels on this node.
+
+        :return: `frozenset` containing labels as strings
         """
         return self._store.node_labels(self._id)
 
@@ -227,39 +222,53 @@ class Relationship(GraphRelationship):
     def __graph_size__(self):
         return 1
 
-    def __init__(self, *type_and_nodes, **properties):
-        type_ = None
+    @classmethod
+    def compose(cls, id, properties, *nodes):
         node_keys = []
-        nodes = []
         node_dict = {}
-        for arg in type_and_nodes:
-            if isinstance(arg, Node):
-                store = arg.__graph_store__()
-                other_node_key = list(store.nodes())[0]
-                node_labels = store.node_labels(other_node_key)
-                node_properties = store.node_properties(other_node_key)
-                node_key = arg.id
-                node_keys.append(node_key)
-                nodes.append(arg)
-                node_dict[node_key] = (node_labels, node_properties)
-            elif type_ is None:
-                type_ = arg
-            else:
-                raise ValueError("Relationships can only have one type and must connect nodes")
+        for node in nodes:
+            store = node.__graph_store__()
+            other_node_key = list(store.nodes())[0]
+            node_labels = store.node_labels(other_node_key)
+            node_properties = store.node_properties(other_node_key)
+            node_key = node.id
+            node_keys.append(node_key)
+            node_dict[node_key] = (node_labels, node_properties)
+        inst = super(Relationship, cls).__new__(cls)
+        inst._id = id
+        inst._store = FrozenGraphStore.build(node_dict, {inst._id: (cls, node_keys, properties)})
+        inst._node_keys = node_keys
+        inst._nodes = tuple(nodes)
+        return inst
+
+    def __init__(self, *nodes, **properties):
+        type_ = type(self)
+        node_keys = []
+        node_dict = {}
+        for node in nodes:
+            if not isinstance(node, Node):
+                raise ValueError("Relationships can only connect nodes (%r passed)" % node)
+            store = node.__graph_store__()
+            other_node_key = list(store.nodes())[0]
+            node_labels = store.node_labels(other_node_key)
+            node_properties = store.node_properties(other_node_key)
+            node_key = node.id
+            node_keys.append(node_key)
+            node_dict[node_key] = (node_labels, node_properties)
         self._id = FrozenGraphStore.new_relationship_id()
         self._store = FrozenGraphStore.build(node_dict, {self._id: (type_, node_keys, properties)})
         self._node_keys = node_keys
         self._nodes = tuple(nodes)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, ", ".join(
-            chain([repr(self.type)], map(repr, self.nodes), ("{}={!r}".format(*item) for item in dict(self).items()))))
+        return "{}({})".format(type(self).__name__, ", ".join(
+            chain(map(repr, self.nodes), ("{}={!r}".format(*item) for item in dict(self).items()))))
 
     def __str__(self):
         if bool(self):
-            return "()-[:{} {}]->()".format(self.type, dict(self))
+            return "()-[:{} {}]->()".format(type(self).__name__, dict(self))
         else:
-            return "()-[:{}]->()".format(self.type)
+            return "()-[:{}]->()".format(type(self).__name__)
 
     def __bool__(self):
         return bool(self._store.relationship_properties(self._id))
@@ -278,7 +287,7 @@ class Relationship(GraphRelationship):
 
     def __eq__(self, other):
         try:
-            return (self.type == other.type and dict(self) == dict(other) and
+            return (type(self) == type(other) and dict(self) == dict(other) and
                     tuple(node.id for node in self.nodes) == tuple(node.id for node in other.nodes))
         except AttributeError:
             return False
@@ -294,22 +303,6 @@ class Relationship(GraphRelationship):
         """ Unique identifier for this node.
         """
         return self._id
-
-    @id.setter
-    def id(self, value):
-        store = self._store
-        old_value = self._id
-        store._relationships[value] = store._relationships[old_value]
-        self._id = value
-        del store._relationships[old_value]
-        store._build_relationships_by_node()
-        store._build_relationships_by_type()
-
-    @property
-    def type(self):
-        """ The type of this relationship.
-        """
-        return self._store.relationship_type(self._id) or Relationship.default_type(self)
 
     @property
     def nodes(self):
@@ -682,6 +675,17 @@ class RelationshipView(GraphRelationship):
         """ Return the nodes connected by this relationship.
         """
         return tuple(self._store.relationship_nodes(self._id))
+
+
+def relationship_type(name):
+    if isinstance(name, str):
+        str_name = name
+    else:
+        try:
+            str_name = name.encode("utf-8")
+        except AttributeError:
+            raise TypeError("Invalid type name %r" % name)
+    return type(str_name, (Relationship,), {})
 
 
 def order(graph_structure):

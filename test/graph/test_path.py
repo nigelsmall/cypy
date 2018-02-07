@@ -18,17 +18,20 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, Relationship, Path
+from cypy.graph import Subgraph, Node, relationship_type, Path
+
 
 a = Node("Person", name="Alice")
 b = Node("Person", name="Bob")
 c = Node("Person", name="Carol")
 d = Node("Person", name="Dave")
 e = Node("Person", name="Eve")
-ab = Relationship(a, "KNOWS", b)
-bc = Relationship(b, "KNOWS", c)
-dc = Relationship(d, "KNOWS", c)
-de = Relationship(d, "KNOWS", e)
+
+KNOWS = relationship_type("KNOWS")
+ab = KNOWS(a, b)
+bc = KNOWS(b, c)
+dc = KNOWS(d, c)
+de = KNOWS(d, e)
 
 
 class PathTestCase(TestCase):

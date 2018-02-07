@@ -19,8 +19,14 @@
 from collections import OrderedDict
 from unittest import TestCase
 
-from cypy.graph import Node, Relationship, Path
+from cypy.graph import Node, relationship_type, Path
 from cypy.encoding import cypher_repr, cypher_escape
+
+
+KNOWS = relationship_type("KNOWS")
+LOVES = relationship_type("LOVES")
+HATES = relationship_type("HATES")
+KNOWS_FR = relationship_type(u"CONNAÎT")
 
 
 class CypherEscapeTestCase(TestCase):
@@ -223,28 +229,28 @@ class CypherRelationshipRepresentationTestCase(TestCase):
     def test_can_encode_relationship(self):
         a = Node(name="Alice")
         b = Node(name="Bob")
-        ab = Relationship(a, "KNOWS", b)
+        ab = KNOWS(a, b)
         encoded = cypher_repr(ab, related_node_template="{property.name}")
         self.assertEqual("(Alice)-[:KNOWS {}]->(Bob)", encoded)
 
     def test_can_encode_relationship_with_names(self):
         a = Node("Person", name="Alice")
         b = Node("Person", name="Bob")
-        ab = Relationship(a, "KNOWS", b)
+        ab = KNOWS(a, b)
         encoded = cypher_repr(ab, related_node_template="{property.name}")
         self.assertEqual("(Alice)-[:KNOWS {}]->(Bob)", encoded)
 
     def test_can_encode_relationship_with_alternative_names(self):
         a = Node("Person", nom=u"Aimée")
         b = Node("Person", nom=u"Baptiste")
-        ab = Relationship(a, u"CONNAÎT", b)
+        ab = KNOWS_FR(a, b)
         encoded = cypher_repr(ab, related_node_template=u"{property.nom}")
-        assert encoded == u"(Aimée)-[:CONNAÎT {}]->(Baptiste)"
+        self.assertEqual(u"(Aimée)-[:CONNAÎT {}]->(Baptiste)", encoded)
 
     def test_can_encode_relationship_with_properties(self):
         a = Node("Person", name="Alice")
         b = Node("Person", name="Bob")
-        ab = Relationship(a, "KNOWS", b, since=1999)
+        ab = KNOWS(a, b, since=1999)
         encoded = cypher_repr(ab, related_node_template="{property.name}")
         self.assertEqual("(Alice)-[:KNOWS {since: 1999}]->(Bob)", encoded)
 
@@ -254,9 +260,9 @@ class CypherPathRepresentationTestCase(TestCase):
     def test_can_write_path(self):
         alice, bob, carol, dave = Node(name="Alice"), Node(name="Bob"), \
                                   Node(name="Carol"), Node(name="Dave")
-        ab = Relationship(alice, "LOVES", bob)
-        cb = Relationship(carol, "HATES", bob)
-        cd = Relationship(carol, "KNOWS", dave)
+        ab = LOVES(alice, bob)
+        cb = HATES(carol, bob)
+        cd = KNOWS(carol, dave)
         path = Path(alice, ab, bob, cb, carol, cd, dave)
         encoded = cypher_repr(path, related_node_template="{property.name}")
         self.assertEqual("(Alice)-[:LOVES {}]->(Bob)<-[:HATES {}]-(Carol)-[:KNOWS {}]->(Dave)", encoded)

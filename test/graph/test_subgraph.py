@@ -18,7 +18,10 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, Relationship, order, size
+from cypy.graph import Subgraph, Node, relationship_type, order, size
+
+
+KNOWS = relationship_type("KNOWS")
 
 
 class SubgraphTestCase(TestCase):
@@ -60,8 +63,8 @@ class SubgraphTestCase(TestCase):
         a = Node(name="Alice")
         b = Node(name="Bob")
         c = Node(name="Carol")
-        ab = Relationship(a, "KNOWS", b)
-        bc = Relationship(b, "KNOWS", c)
+        ab = KNOWS(a, b)
+        bc = KNOWS(b, c)
         s = Subgraph.union(ab, bc)
         assert order(s) == 3
         assert size(s) == 2
@@ -72,8 +75,8 @@ class SubgraphTestCase(TestCase):
         a = Node(name="Alice")
         b = Node(name="Bob")
         c = Node(name="Carol")
-        ab = Relationship(a, "KNOWS", b)
-        bc = Relationship(b, "KNOWS", c)
+        ab = KNOWS(a, b)
+        bc = KNOWS(b, c)
         s = ab | bc
         assert order(s) == 3
         assert size(s) == 2
@@ -85,8 +88,8 @@ class SubgraphTestCase(TestCase):
         b = Node(name="Bob")
         c = Node(name="Carol")
         d = Node(name="Dave")
-        ab = Relationship(a, "KNOWS", b)
-        bc = Relationship(b, "KNOWS", c)
+        ab = KNOWS(a, b)
+        bc = KNOWS(b, c)
         s = ab | bc | c | d
         assert order(s) == 4
         assert size(s) == 2
@@ -98,31 +101,31 @@ class NodeTestCase(TestCase):
 
     def test_should_be_able_to_create_empty_node(self):
         a = Node()
-        assert not a.labels
+        assert not a.labels()
         assert dict(a) == {}
 
     def test_should_be_able_to_create_node_with_labels(self):
         a = Node("Person", "Employee")
-        assert a.labels == {"Person", "Employee"}
+        assert a.labels() == {"Person", "Employee"}
         assert dict(a) == {}
 
     def test_should_be_able_to_create_node_with_properties(self):
         a = Node(name="Alice", age=33)
-        assert a.labels == set()
+        assert a.labels() == set()
         assert dict(a) == {"name": "Alice", "age": 33}
 
     def test_should_be_able_to_create_node_with_labels_and_properties(self):
         a = Node("Person", "Employee", name="Alice", age=33)
-        assert a.labels == {"Person", "Employee"}
+        assert a.labels() == {"Person", "Employee"}
         assert dict(a) == {"name": "Alice", "age": 33}
 
     def test_label_containment(self):
         a = Node("Person", name="Alice")
-        assert "Person" in a.labels
+        assert "Person" in a.labels()
 
     def test_label_non_containment(self):
         a = Node("Person", name="Alice")
-        assert "Employee" not in a.labels
+        assert "Employee" not in a.labels()
 
     def test_should_be_able_to_get_properties(self):
         a = Node("Person", name="Alice")
@@ -160,8 +163,8 @@ class RelationshipTestCase(TestCase):
     b = Node("Person", name="Bob")
 
     def test_should_be_able_to_create_simple_relationship(self):
-        ab = Relationship(self.a, "KNOWS", self.b, since=1999)
+        ab = KNOWS(self.a, self.b, since=1999)
         assert len(ab) == 1
         assert dict(ab) == {"since": 1999}
         assert ab.nodes == (self.a, self.b)
-        assert ab.type == "KNOWS"
+        assert type(ab) == KNOWS

@@ -64,24 +64,19 @@ class GraphNode(GraphStructure, Mapping):
     def id(self):
         """ The unique identifier for this node
         """
-        raise None
+        return None
 
-    @abstractproperty
     def labels(self):
-        """ The set of all labels on this node.
+        """ Return the set of all labels on this node.
+
+        :return: `frozenset` containing labels as strings
         """
-        raise frozenset()
+        return frozenset()
 
 
 class GraphRelationship(GraphStructure, Mapping):
     """ Abstract base class for a relationship within a graph.
     """
-
-    @abstractproperty
-    def type(self):
-        """ The type of this relationship.
-        """
-        return None
 
     @abstractproperty
     def nodes(self):

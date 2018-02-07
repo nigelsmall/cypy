@@ -18,7 +18,10 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, Relationship, Graph, order, size
+from cypy.graph import Subgraph, Node, relationship_type, Graph, order, size
+
+
+KNOWS = relationship_type("KNOWS")
 
 
 class GraphTestCase(TestCase):
@@ -68,8 +71,8 @@ class GraphTestCase(TestCase):
         a = Node(name="Alice")
         b = Node(name="Bob")
         c = Node(name="Carol")
-        ab = Relationship(a, "KNOWS", b)
-        bc = Relationship(b, "KNOWS", c)
+        ab = KNOWS(a, b)
+        bc = KNOWS(b, c)
         g = Graph()
         g.load(Subgraph.union(ab, bc))
         dumped = Subgraph(g)

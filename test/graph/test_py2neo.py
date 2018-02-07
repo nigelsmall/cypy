@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.graph import Subgraph, Node, Relationship, order, size
+from cypy.graph import Subgraph, Node, relationship_type, order, size
 from cypy.graph.store import PropertyDict
 
 
@@ -27,11 +27,16 @@ bob = Node("Person")
 carol = Node("Person")
 dave = Node("Person")
 
-alice_knows_bob = Relationship(alice, "KNOWS", bob, since=1999)
-alice_likes_carol = Relationship(alice, "LIKES", carol)
-carol_dislikes_bob = Relationship(carol, "DISLIKES", bob)
-carol_married_to_dave = Relationship(carol, "MARRIED_TO", dave)
-dave_works_for_dave = Relationship(dave, "WORKS_FOR", dave)
+KNOWS = relationship_type("KNOWS")
+LIKES = relationship_type("LIKES")
+DISLIKES = relationship_type("DISLIKES")
+MARRIED_TO = relationship_type("MARRIED_TO")
+WORKS_FOR = relationship_type("WORKS_FOR")
+alice_knows_bob = KNOWS(alice, bob, since=1999)
+alice_likes_carol = LIKES(alice, carol)
+carol_dislikes_bob = DISLIKES(carol, bob)
+carol_married_to_dave = MARRIED_TO(carol, dave)
+dave_works_for_dave = WORKS_FOR(dave, dave)
 
 
 class PropertyCoercionTestCase(TestCase):
@@ -305,7 +310,7 @@ class NodeTestCase(TestCase):
         assert alice.__bool__()
         assert alice.__nonzero__()
         assert len(alice) == 2
-        assert set(alice.labels) == {"Person", "Employee"}
+        assert set(alice.labels()) == {"Person", "Employee"}
         assert dict(alice) == {"name": "Alice", "age": 33}
         assert dict(alice)["name"] == "Alice"
         assert alice["name"] == "Alice"
@@ -341,7 +346,7 @@ class RelationshipTestCase(TestCase):
 
     def test_relationship(self):
         assert alice_knows_bob.nodes == (alice, bob)
-        assert alice_knows_bob.type == "KNOWS"
+        assert type(alice_knows_bob) == KNOWS
         assert dict(alice_knows_bob) == {"since": 1999}
         assert alice_knows_bob["since"] == 1999
         assert order(alice_knows_bob) == 2
@@ -354,49 +359,12 @@ class RelationshipTestCase(TestCase):
         assert size(dave_works_for_dave) == 1
         assert set(dave_works_for_dave.nodes) == {dave}
 
-    def test_construction_from_no_arguments(self):
-        rel = Relationship()
-        assert rel.nodes == ()
-        assert rel.type == "RELATIONSHIP"
-
-    def test_construction_from_one_argument(self):
-        rel = Relationship(alice)
-        assert rel.nodes == (alice,)
-        assert rel.type == "RELATIONSHIP"
-
-    def test_construction_from_two_node_arguments(self):
-        rel = Relationship(alice, bob)
-        assert rel.nodes == (alice, bob)
-        assert rel.type == "RELATIONSHIP"
-
-    def test_construction_from_node_and_type_arguments(self):
-        rel = Relationship(alice, "LIKES")
-        assert rel.nodes == (alice,)
-        assert rel.type == "LIKES"
-
-    def test_construction_from_three_arguments(self):
-        rel = Relationship(alice, "KNOWS", bob)
-        assert rel.nodes == (alice, bob)
-        assert rel.type == "KNOWS"
-
-    def test_construction_from_subclass(self):
-        class WorksWith(Relationship):
-            pass
-        rel = WorksWith(alice, bob)
-        assert rel.nodes == (alice, bob)
-        assert rel.type == "WORKS_WITH"
-
-    def test_construction_from_more_arguments(self):
-        rel = Relationship(alice, "KNOWS", bob, carol)
-        assert rel.nodes == (alice, bob, carol)
-        assert rel.type == "KNOWS"
-
     def test_equality(self):
         other_rel = alice_knows_bob
         assert alice_knows_bob == other_rel
 
     def test_inequality(self):
-        other_rel = Relationship(alice, "KNOWS", bob, since=1999)
+        other_rel = KNOWS(alice, bob, since=1999)
         assert alice != other_rel
 
     def test_inequality_with_other_types(self):
@@ -405,10 +373,10 @@ class RelationshipTestCase(TestCase):
 
 class RelationshipLoopTestCase(TestCase):
 
-    loop = Relationship(alice, "LIKES", alice)
+    loop = LIKES(alice, alice)
 
     def test_type(self):
-        assert self.loop.type == "LIKES"
+        assert type(self.loop) == LIKES
 
     def test_nodes(self):
         assert self.loop.nodes == (alice, alice)

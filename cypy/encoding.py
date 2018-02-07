@@ -23,6 +23,9 @@ from re import compile as re_compile
 from sys import version_info
 from unicodedata import category
 
+from .compat import ustr
+
+
 if version_info >= (3,):
     number = (int, float)
     string = (bytes, str)
@@ -279,16 +282,15 @@ class CypherEncoder(object):
             node = NodeReference(node)
         return u"(" + template.format(
             id=node.id,
-            labels=LabelSetView(node.labels, encoding=self.encoding, quote=self.quote),
+            labels=LabelSetView(node.labels(), encoding=self.encoding, quote=self.quote),
             properties=PropertyDictView(node, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(node, u""),
         ).strip() + u")"
 
     def _encode_relationship_detail(self, relationship, template):
-        from cypy.graph import Relationship
         return u"[" + template.format(
             id=relationship.id,
-            type=u":" + getattr(relationship, "type", Relationship.default_type(relationship)),
+            type=u":" + ustr(type(relationship).__name__),
             properties=PropertyDictView(relationship, encoding=self.encoding, quote=self.quote),
             property=PropertySelector(relationship, u""),
         ).strip() + u"]"
