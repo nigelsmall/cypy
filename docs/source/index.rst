@@ -7,7 +7,7 @@ Installation
 
 .. code-block:: sh
 
-   $ pip install technige.cypy
+   $ pip install neo4j-cypy
 
 
 Contents

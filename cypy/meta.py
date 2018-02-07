@@ -16,12 +16,11 @@
 # limitations under the License.
 
 
-__package__ = "cypy"
-__version__ = "1.3.0"
+__version__ = "1.6.0"
 __description__ = "Cypher resource library for Python"
-__distribution__ = "technige.{}".format(__package__)
-__author__ = "Neo4j <technige@nige.tech>"
+__distribution__ = "neo4j-cypy"
+__author__ = "Neo4j <drivers@neo4j.com>"
 __copyright__ = "2002-2018, Neo4j"
-__email__ = "{}@nige.tech".format(__package__)
-__url__ = "http://nige.tech/{}".format(__package__)
+__email__ = "drivers@neo4j.com"
+__url__ = "http://cypy.readthedocs.io/"
 __license__ = "Apache License, Version 2.0"
