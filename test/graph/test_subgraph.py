@@ -18,7 +18,7 @@
 
 from unittest import TestCase
 
-from cypy.graph import FrozenGraph, Node, relationship_type, order, size, GraphStructure
+from cypy.graph import FrozenGraph, Node, relationship_type, graph_order, graph_size, GraphStructure, Subgraph
 
 
 KNOWS = relationship_type("KNOWS")
@@ -28,25 +28,25 @@ class SubgraphTestCase(TestCase):
 
     def test_should_be_able_to_create_empty_subgraph(self):
         f = FrozenGraph()
-        assert order(f) == 0
-        assert size(f) == 0
+        assert graph_order(f) == 0
+        assert graph_size(f) == 0
         assert set(f.nodes()) == set()
         assert set(f.relationships()) == set()
 
     def test_should_be_able_to_create_subgraph_from_single_node(self):
         a = Node(name="Alice")
         f = FrozenGraph(a)
-        assert order(f) == 1
-        assert size(f) == 0
+        assert graph_order(f) == 1
+        assert graph_size(f) == 0
         assert set(f.nodes()) == {a}
         assert set(f.relationships()) == set()
 
     def test_should_be_able_to_create_subgraph_from_union_of_nodes(self):
         a = Node(name="Alice")
         b = Node(name="Bob")
-        s = GraphStructure.union(a, b)
-        assert order(s) == 2
-        assert size(s) == 0
+        s = Subgraph.union(a, b)
+        assert graph_order(s) == 2
+        assert graph_size(s) == 0
         assert set(s.nodes()) == {a, b}
         assert set(s.relationships()) == set()
 
@@ -54,8 +54,8 @@ class SubgraphTestCase(TestCase):
         a = Node(name="Alice")
         b = Node(name="Bob")
         s = a | b
-        assert order(s) == 2
-        assert size(s) == 0
+        assert graph_order(s) == 2
+        assert graph_size(s) == 0
         assert set(s.nodes()) == {a, b}
         assert set(s.relationships()) == set()
 
@@ -65,9 +65,9 @@ class SubgraphTestCase(TestCase):
         c = Node(name="Carol")
         ab = KNOWS(a, b)
         bc = KNOWS(b, c)
-        s = GraphStructure.union(ab, bc)
-        assert order(s) == 3
-        assert size(s) == 2
+        s = Subgraph.union(ab, bc)
+        assert graph_order(s) == 3
+        assert graph_size(s) == 2
         assert set(s.nodes()) == {a, b, c}
         assert set(s.relationships()) == {ab, bc}
 
@@ -78,8 +78,8 @@ class SubgraphTestCase(TestCase):
         ab = KNOWS(a, b)
         bc = KNOWS(b, c)
         s = ab | bc
-        assert order(s) == 3
-        assert size(s) == 2
+        assert graph_order(s) == 3
+        assert graph_size(s) == 2
         assert set(s.nodes()) == {a, b, c}
         assert set(s.relationships()) == {ab, bc}
 
@@ -91,8 +91,8 @@ class SubgraphTestCase(TestCase):
         ab = KNOWS(a, b)
         bc = KNOWS(b, c)
         s = ab | bc | c | d
-        assert order(s) == 4
-        assert size(s) == 2
+        assert graph_order(s) == 4
+        assert graph_size(s) == 2
         assert set(s.nodes()) == {a, b, c, d}
         assert set(s.relationships()) == {ab, bc}
 

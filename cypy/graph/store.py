@@ -174,27 +174,10 @@ class GraphStructure(object):
     storage objects to interact via a common store format.
     """
 
-    @staticmethod
-    def union(*graph_structures):
-        from cypy.graph import FrozenGraph
-        store = MutableGraphStore()
-        for graph_structure in graph_structures:
-            try:
-                sub_store = graph_structure.__graph_store__()
-            except AttributeError:
-                raise TypeError("{} object is not a graph structure".format(type(graph_structure)))
-            else:
-                store.update(sub_store)
-        return FrozenGraph(store)
+    _store = None
 
     def __graph_store__(self):
-        raise NotImplementedError()
-
-    def __graph_order__(self):
-        raise NotImplementedError()
-
-    def __graph_size__(self):
-        raise NotImplementedError()
+        return self._store
 
     def __eq__(self, other):
         try:
@@ -205,8 +188,11 @@ class GraphStructure(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __or__(self, other):
-        return self.union(self, other)
+    def __hash__(self):
+        return hash(self.__graph_store__())
+
+    def is_mutable(self):
+        return self._store.is_mutable()
 
 
 class GraphStore(GraphStructure):
@@ -277,11 +263,11 @@ class GraphStore(GraphStructure):
         return cls(GraphStore(nodes, relationships))
 
     @classmethod
-    def new_node_id(cls):
+    def new_node_key(cls):
         return uuid4()
 
     @classmethod
-    def new_relationship_id(cls):
+    def new_relationship_key(cls):
         return uuid4()
 
     def __init__(self,
@@ -304,6 +290,9 @@ class GraphStore(GraphStructure):
             self._build_relationships_by_node()
         else:
             self._relationships_by_node = relationships_by_node
+
+    def is_mutable(self):
+        raise NotImplementedError()
 
     def dump(self):
         n = [node_str(key, labels, properties) for key, (labels, properties) in self._nodes.items()]
@@ -505,6 +494,9 @@ class FrozenGraphStore(GraphStore):
         else:
             raise TypeError("Argument is not a graph store")
 
+    def is_mutable(self):
+        return False
+
 
 class MutableGraphStore(GraphStore):
 
@@ -534,6 +526,9 @@ class MutableGraphStore(GraphStore):
         self._lock = RLock()
         if graph_store is not None:
             self.update(graph_store)
+
+    def is_mutable(self):
+        return True
 
     def _update_nodes(self, nodes):
         self._nodes.update((key, self.node_entry(key, entry)) for key, entry in nodes.items())
@@ -569,7 +564,7 @@ class MutableGraphStore(GraphStore):
         nodes = {}
         nodes_by_label = {}
         for entry in entries:
-            n_id = self.new_node_id()
+            n_id = self.new_node_key()
             mutable_entry = self.node_entry(n_id, entry)
             nodes[n_id] = mutable_entry
             for label in mutable_entry.labels:
@@ -603,7 +598,7 @@ class MutableGraphStore(GraphStore):
         r_ids = []
         with self._lock:
             for r_type, n_ids, r_properties in entries:
-                r_id = self.new_relationship_id()
+                r_id = self.new_relationship_key()
                 mutable_entry = self.relationship_entry((r_type, n_ids, r_properties))
                 self._relationships[r_id] = mutable_entry
                 self._relationships_by_type.setdefault(r_type, set()).add(r_id)
