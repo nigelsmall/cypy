@@ -83,6 +83,8 @@ class Node(Entity):
     relationships.
     """
 
+    __labels__ = ()
+
     def __graph_order__(self):
         return 1
 
@@ -90,12 +92,12 @@ class Node(Entity):
         return 0
 
     @classmethod
-    def construct(cls, n_key, labels, properties):
+    def build(cls, n_key, labels, properties):
         """ Construct a standalone Node.
         """
         inst = super(Node, cls).__new__(cls)
         inst._id = n_key
-        inst._store = FrozenGraphStore.build({inst._id: (labels, properties)})
+        inst._store = FrozenGraphStore.build({inst._id: (list(chain(cls.__labels__, labels)), properties)})
         return inst
 
     @classmethod
@@ -109,7 +111,7 @@ class Node(Entity):
 
     def __init__(self, *labels, **properties):
         self._id = FrozenGraphStore.new_node_key()
-        self._store = FrozenGraphStore.build({self._id: (labels, properties)})
+        self._store = FrozenGraphStore.build({self._id: (list(chain(self.__labels__, labels)), properties)})
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join(
@@ -205,7 +207,7 @@ class Relationship(Entity):
         return 1
 
     @classmethod
-    def construct(cls, id, properties, *nodes):
+    def build(cls, r_key, properties, *nodes):
         node_keys = []
         node_dict = {}
         for node in nodes:
@@ -217,7 +219,7 @@ class Relationship(Entity):
             node_keys.append(node_key)
             node_dict[node_key] = (node_labels, node_properties)
         inst = super(Relationship, cls).__new__(cls)
-        inst._id = id
+        inst._id = r_key
         inst._store = FrozenGraphStore.build(node_dict, {inst._id: (cls, node_keys, properties)})
         inst._nodes = tuple(nodes)
         return inst
@@ -492,9 +494,7 @@ class RelationshipSelection(GraphStructure):
         self._store.remove_relationships(self._selection)
 
 
-def relationship_type(name, base_class=Relationship):
-    if not issubclass(base_class, Relationship):
-        raise TypeError("Base class must extend %s" % Relationship.__class__)
+def relationship_type(name):
     if isinstance(name, str):
         str_name = name
     else:
@@ -502,7 +502,7 @@ def relationship_type(name, base_class=Relationship):
             str_name = name.encode("utf-8")
         except AttributeError:
             raise ValueError("Invalid type name %r" % name)
-    return type(str_name, (base_class,), {})
+    return type(str_name, (Relationship,), {})
 
 
 def graph_order(graph_structure):

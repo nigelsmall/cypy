@@ -33,7 +33,7 @@ class NodeTestCase(TestCase):
         self.assertEqual(dict(a), {"name": "Alice"})
 
     def test_can_create_node_with_advanced_constructor(self):
-        a = Node.construct("a", ["Person"], {"name": "Alice"})
+        a = Node.build("a", ["Person"], {"name": "Alice"})
         self.assertFalse(a.is_mutable())
         self.assertEqual(a.id, "a")
         self.assertEqual(set(a.labels()), {"Person"})
@@ -109,6 +109,17 @@ class NodeTestCase(TestCase):
         a = Node("Person", name="Alice")
         b = Node("Person", name="Bob")
         self.assertNotEqual(a, b)
+
+    def test_static_labels(self):
+
+        class Person(Node):
+            __labels__ = ("Person",)
+
+        a1 = Person(name="Alice")
+        self.assertEqual(set(a1.labels()), {"Person"})
+
+        a2 = Person("Employee", name="Alice")
+        self.assertEqual(set(a2.labels()), {"Person", "Employee"})
 
 
 class GraphTestCase(TestCase):
